@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import Collapsible from '../components/Collapsible'
+import StockBadge from '../components/StockBadge'
 import type { ResumenBarRow, ResumenProductoRow, StockBodegaRow } from '../lib/types'
 
 const moneda = new Intl.NumberFormat('es-CR', { maximumFractionDigits: 0 })
@@ -93,7 +94,9 @@ export default function Resumen() {
               {stockBodega.map((s) => (
                 <tr key={s.producto_id}>
                   <td>{s.nombre}</td>
-                  <td>{s.stock_bodega}</td>
+                  <td>
+                    <StockBadge value={s.stock_bodega} />
+                  </td>
                 </tr>
               ))}
             </tbody>

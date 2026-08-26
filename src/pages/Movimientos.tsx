@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabaseClient'
 import { useAuth } from '../lib/AuthContext'
 import Collapsible from '../components/Collapsible'
 import Modal from '../components/Modal'
+import StockBadge from '../components/StockBadge'
 import type {
   Bar,
   MotivoIncidencia,
@@ -296,12 +297,12 @@ export default function Movimientos() {
           </select>
           {modo === 'traslado' && (
             <div style={{ marginTop: 6, fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-              Stock en bodega: {stockBodegaDisponible}
+              Stock en bodega: <StockBadge value={stockBodegaDisponible} />
             </div>
           )}
           {modo === 'devolucion' && (
             <div style={{ marginTop: 6, fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-              Stock actual en ese bar: {stockBarActual}
+              Stock actual en ese bar: <StockBadge value={stockBarActual} />
             </div>
           )}
         </div>
