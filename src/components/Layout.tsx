@@ -2,8 +2,8 @@ import { NavLink, Outlet } from 'react-router-dom'
 import { useAuth } from '../lib/AuthContext'
 
 const tabs = [
-  { to: '/', label: 'Consumo', icon: '🍹', end: true },
-  { to: '/traslado', label: 'Traslado', icon: '🚚', end: false },
+  { to: '/', label: 'Movimientos', icon: '📦', end: true },
+  { to: '/incidencia', label: 'Incidencia', icon: '⚠️', end: false },
   { to: '/resumen', label: 'Resumen', icon: '📊', end: false },
   { to: '/catalogo', label: 'Catálogo', icon: '🗂️', end: false },
 ]

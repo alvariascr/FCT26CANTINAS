@@ -1,13 +1,21 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { supabase } from '../lib/supabaseClient'
-import { useAuth } from '../lib/AuthContext'
+import Modal from '../components/Modal'
 import type { Bar, Producto, TipoProducto } from '../lib/types'
 
+const moneda = new Intl.NumberFormat('es-CR', { maximumFractionDigits: 0 })
+
+type Tab = 'productos' | 'bares'
+
 export default function Catalogo() {
-  const { session } = useAuth()
+  const [tab, setTab] = useState<Tab>('productos')
   const [productos, setProductos] = useState<Producto[]>([])
   const [bares, setBares] = useState<Bar[]>([])
   const [msg, setMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
+
+  const [expandedId, setExpandedId] = useState<string | null>(null)
+  const [showNuevoProducto, setShowNuevoProducto] = useState(false)
+  const [showNuevoBar, setShowNuevoBar] = useState(false)
 
   const [nuevoNombre, setNuevoNombre] = useState('')
   const [nuevoTipo, setNuevoTipo] = useState<TipoProducto>('alcoholica')
@@ -17,9 +25,7 @@ export default function Catalogo() {
   const [nuevoPrecio, setNuevoPrecio] = useState('')
 
   const [nuevoBar, setNuevoBar] = useState('')
-
-  const [entradaProductoId, setEntradaProductoId] = useState('')
-  const [entradaCantidad, setEntradaCantidad] = useState('')
+  const [nuevoBarCortesia, setNuevoBarCortesia] = useState(false)
 
   async function cargar() {
     const [{ data: productosData }, { data: baresData }] = await Promise.all([
@@ -54,6 +60,7 @@ export default function Catalogo() {
     setNuevoMlPorcion('')
     setNuevoCosto('')
     setNuevoPrecio('')
+    setShowNuevoProducto(false)
     setMsg({ type: 'success', text: 'Producto agregado.' })
     cargar()
   }
@@ -67,6 +74,7 @@ export default function Catalogo() {
       setMsg({ type: 'error', text: 'No se pudo guardar: ' + error.message })
     } else {
       setMsg({ type: 'success', text: `${p.nombre} actualizado.` })
+      setExpandedId(null)
     }
   }
 
@@ -84,12 +92,16 @@ export default function Catalogo() {
   async function agregarBar(e: FormEvent) {
     e.preventDefault()
     if (!nuevoBar.trim()) return
-    const { error } = await supabase.from('bares').insert({ nombre: nuevoBar.trim() })
+    const { error } = await supabase
+      .from('bares')
+      .insert({ nombre: nuevoBar.trim(), es_cortesia: nuevoBarCortesia })
     if (error) {
       setMsg({ type: 'error', text: 'No se pudo agregar el bar: ' + error.message })
       return
     }
     setNuevoBar('')
+    setNuevoBarCortesia(false)
+    setShowNuevoBar(false)
     cargar()
   }
 
@@ -98,21 +110,9 @@ export default function Catalogo() {
     cargar()
   }
 
-  async function agregarEntrada(e: FormEvent) {
-    e.preventDefault()
-    const cantidad = Number(entradaCantidad)
-    if (!entradaProductoId || !cantidad || cantidad <= 0) return
-    const { error } = await supabase.from('entradas_bodega').insert({
-      producto_id: entradaProductoId,
-      cantidad,
-      usuario_id: session?.user.id,
-    })
-    if (error) {
-      setMsg({ type: 'error', text: 'No se pudo registrar la entrada: ' + error.message })
-      return
-    }
-    setEntradaCantidad('')
-    setMsg({ type: 'success', text: 'Entrada a bodega registrada.' })
+  async function toggleCortesia(b: Bar) {
+    await supabase.from('bares').update({ es_cortesia: !b.es_cortesia }).eq('id', b.id)
+    cargar()
   }
 
   return (
@@ -120,178 +120,260 @@ export default function Catalogo() {
       <h2>Catálogo</h2>
       {msg && <div className={`msg ${msg.type}`}>{msg.text}</div>}
 
-      <div className="section-title">Bares</div>
-      <div className="card">
-        {bares.map((b) => (
-          <div
-            key={b.id}
-            style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}
-          >
-            <span style={{ opacity: b.activo ? 1 : 0.4 }}>{b.nombre}</span>
-            <button className="icon-btn" onClick={() => toggleBar(b)}>
-              {b.activo ? 'Desactivar' : 'Activar'}
-            </button>
-          </div>
-        ))}
-        <form onSubmit={agregarBar} style={{ display: 'flex', gap: 8, marginTop: 10 }}>
-          <input
-            placeholder="Nombre del nuevo bar"
-            value={nuevoBar}
-            onChange={(e) => setNuevoBar(e.target.value)}
-          />
-          <button className="icon-btn" type="submit">
-            Agregar
-          </button>
-        </form>
+      <div className="type-toggle">
+        <button
+          type="button"
+          className={tab === 'productos' ? 'active' : ''}
+          onClick={() => setTab('productos')}
+        >
+          🗂️ Productos
+        </button>
+        <button
+          type="button"
+          className={tab === 'bares' ? 'active' : ''}
+          onClick={() => setTab('bares')}
+        >
+          📍 Bares
+        </button>
       </div>
 
-      <div className="section-title">Entradas a bodega (stock inicial / reposición)</div>
-      <div className="card">
-        <form onSubmit={agregarEntrada} style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-          <select
-            style={{ flex: '1 1 100%' }}
-            value={entradaProductoId}
-            onChange={(e) => setEntradaProductoId(e.target.value)}
-            required
-          >
-            <option value="">Seleccioná un producto...</option>
-            {productos
-              .filter((p) => p.activo)
-              .map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.nombre}
-                </option>
-              ))}
-          </select>
-          <input
-            type="number"
-            placeholder="Cantidad"
-            min={1}
-            value={entradaCantidad}
-            onChange={(e) => setEntradaCantidad(e.target.value)}
-            style={{ flex: 1 }}
-            required
-          />
-          <button className="icon-btn" type="submit">
-            Registrar entrada
+      {tab === 'bares' && (
+        <>
+          <button className="btn-primary" style={{ marginBottom: 14 }} onClick={() => setShowNuevoBar(true)}>
+            + Nuevo bar
           </button>
-        </form>
-      </div>
 
-      <div className="section-title">Productos</div>
-      <div className="card">
-        <table>
-          <thead>
-            <tr>
-              <th>Producto</th>
-              <th>Costo</th>
-              <th>Precio</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-            {productos.map((p) => (
-              <tr key={p.id} style={{ opacity: p.activo ? 1 : 0.4 }}>
-                <td>{p.nombre}</td>
-                <td>
-                  <input
-                    type="number"
-                    value={p.costo_compra}
-                    style={{ width: 80, padding: 6 }}
-                    onChange={(e) => editarLocal(p.id, 'costo_compra', e.target.value)}
-                  />
-                </td>
-                <td>
-                  <input
-                    type="number"
-                    value={p.precio_venta_porcion}
-                    style={{ width: 80, padding: 6 }}
-                    onChange={(e) => editarLocal(p.id, 'precio_venta_porcion', e.target.value)}
-                  />
-                </td>
-                <td className="row-actions">
-                  <button className="icon-btn" onClick={() => guardarProducto(p)}>
-                    Guardar
-                  </button>
-                  <button className="icon-btn" onClick={() => toggleProducto(p)}>
-                    {p.activo ? 'Desactivar' : 'Activar'}
-                  </button>
-                </td>
-              </tr>
+          <div className="section-title">Bares del evento</div>
+          <div className="card" style={{ padding: 0 }}>
+            {bares.map((b) => (
+              <div
+                key={b.id}
+                style={{
+                  padding: '14px 16px',
+                  borderBottom: '1px solid var(--border)',
+                  opacity: b.activo ? 1 : 0.4,
+                }}
+              >
+                <div
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    marginBottom: b.es_cortesia ? 4 : 0,
+                  }}
+                >
+                  <span>{b.nombre}</span>
+                  <div className="row-actions">
+                    <button className="icon-btn" onClick={() => toggleCortesia(b)}>
+                      {b.es_cortesia ? 'Quitar cortesía' : 'Marcar cortesía'}
+                    </button>
+                    <button className="icon-btn" onClick={() => toggleBar(b)}>
+                      {b.activo ? 'Desactivar' : 'Activar'}
+                    </button>
+                  </div>
+                </div>
+                {b.es_cortesia && (
+                  <span style={{ fontSize: '0.75rem', color: 'var(--accent-strong)' }}>
+                    🎁 Cortesía — no genera ingreso
+                  </span>
+                )}
+              </div>
             ))}
-          </tbody>
-        </table>
-      </div>
+          </div>
 
-      <div className="section-title">Agregar producto nuevo</div>
-      <div className="card">
-        <form onSubmit={agregarProducto}>
-          <div className="field">
-            <label htmlFor="p-nombre">Nombre</label>
-            <input
-              id="p-nombre"
-              value={nuevoNombre}
-              onChange={(e) => setNuevoNombre(e.target.value)}
-              required
-            />
-          </div>
-          <div className="type-toggle">
-            <button
-              type="button"
-              className={nuevoTipo === 'alcoholica' ? 'active' : ''}
-              onClick={() => setNuevoTipo('alcoholica')}
+          {showNuevoBar && (
+            <Modal
+              title="Nuevo bar"
+              onClose={() => {
+                setShowNuevoBar(false)
+                setNuevoBarCortesia(false)
+              }}
             >
-              🍺 Alcohólica
-            </button>
-            <button
-              type="button"
-              className={nuevoTipo === 'sin_alcohol' ? 'active' : ''}
-              onClick={() => setNuevoTipo('sin_alcohol')}
-            >
-              🥤 Sin alcohol
-            </button>
-          </div>
-          <div className="field">
-            <label htmlFor="p-ml-botella">ml por botella/unidad</label>
-            <input
-              id="p-ml-botella"
-              type="number"
-              value={nuevoMlBotella}
-              onChange={(e) => setNuevoMlBotella(e.target.value)}
-            />
-          </div>
-          <div className="field">
-            <label htmlFor="p-ml-porcion">ml por porción (shot/copa/vaso)</label>
-            <input
-              id="p-ml-porcion"
-              type="number"
-              value={nuevoMlPorcion}
-              onChange={(e) => setNuevoMlPorcion(e.target.value)}
-            />
-          </div>
-          <div className="field">
-            <label htmlFor="p-costo">Costo de compra por unidad (₡)</label>
-            <input
-              id="p-costo"
-              type="number"
-              value={nuevoCosto}
-              onChange={(e) => setNuevoCosto(e.target.value)}
-            />
-          </div>
-          <div className="field">
-            <label htmlFor="p-precio">Precio de venta por porción (₡)</label>
-            <input
-              id="p-precio"
-              type="number"
-              value={nuevoPrecio}
-              onChange={(e) => setNuevoPrecio(e.target.value)}
-            />
-          </div>
-          <button className="btn-primary" type="submit">
-            Agregar producto
+              <form onSubmit={agregarBar}>
+                <div className="field">
+                  <label htmlFor="bar-nombre">Nombre del bar</label>
+                  <input
+                    id="bar-nombre"
+                    placeholder="Ej: Bar piscina, Comisión cabalgata..."
+                    value={nuevoBar}
+                    onChange={(e) => setNuevoBar(e.target.value)}
+                    required
+                    autoFocus
+                  />
+                </div>
+                <label
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 10,
+                    marginBottom: 20,
+                    fontSize: '0.9rem',
+                  }}
+                >
+                  <input
+                    type="checkbox"
+                    checked={nuevoBarCortesia}
+                    onChange={(e) => setNuevoBarCortesia(e.target.checked)}
+                    style={{ width: 18, height: 18 }}
+                  />
+                  Es cortesía — no genera ingreso (ej. actividad que regala bebida)
+                </label>
+                <button className="btn-primary" type="submit">
+                  Agregar bar
+                </button>
+              </form>
+            </Modal>
+          )}
+        </>
+      )}
+
+      {tab === 'productos' && (
+        <>
+          <button
+            className="btn-primary"
+            style={{ marginBottom: 14 }}
+            onClick={() => setShowNuevoProducto(true)}
+          >
+            + Nuevo producto
           </button>
-        </form>
-      </div>
+
+          <div className="card" style={{ padding: 0 }}>
+            {productos.map((p) => {
+              const expanded = expandedId === p.id
+              return (
+                <div
+                  key={p.id}
+                  style={{ borderBottom: '1px solid var(--border)', opacity: p.activo ? 1 : 0.4 }}
+                >
+                  <button
+                    onClick={() => setExpandedId(expanded ? null : p.id)}
+                    style={{
+                      width: '100%',
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      background: 'none',
+                      border: 'none',
+                      color: 'var(--text)',
+                      padding: '14px 16px',
+                      textAlign: 'left',
+                      fontSize: '0.95rem',
+                    }}
+                  >
+                    <span>{p.nombre}</span>
+                    <span style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>
+                      ₡{moneda.format(p.precio_venta_porcion)}{' '}
+                      <span style={{ marginLeft: 6 }}>{expanded ? '▲' : '▼'}</span>
+                    </span>
+                  </button>
+                  {expanded && (
+                    <div style={{ padding: '0 16px 16px' }}>
+                      <div className="field">
+                        <label>Costo de compra (₡)</label>
+                        <input
+                          type="number"
+                          value={p.costo_compra}
+                          onChange={(e) => editarLocal(p.id, 'costo_compra', e.target.value)}
+                        />
+                      </div>
+                      <div className="field">
+                        <label>Precio de venta por porción (₡)</label>
+                        <input
+                          type="number"
+                          value={p.precio_venta_porcion}
+                          onChange={(e) =>
+                            editarLocal(p.id, 'precio_venta_porcion', e.target.value)
+                          }
+                        />
+                      </div>
+                      <div className="row-actions">
+                        <button className="icon-btn" onClick={() => guardarProducto(p)}>
+                          Guardar
+                        </button>
+                        <button className="icon-btn" onClick={() => toggleProducto(p)}>
+                          {p.activo ? 'Desactivar' : 'Activar'}
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )
+            })}
+          </div>
+
+          {showNuevoProducto && (
+            <Modal title="Nuevo producto" onClose={() => setShowNuevoProducto(false)}>
+              <form onSubmit={agregarProducto}>
+                <div className="field">
+                  <label htmlFor="p-nombre">Nombre</label>
+                  <input
+                    id="p-nombre"
+                    value={nuevoNombre}
+                    onChange={(e) => setNuevoNombre(e.target.value)}
+                    required
+                    autoFocus
+                  />
+                </div>
+                <div className="type-toggle">
+                  <button
+                    type="button"
+                    className={nuevoTipo === 'alcoholica' ? 'active' : ''}
+                    onClick={() => setNuevoTipo('alcoholica')}
+                  >
+                    🍺 Alcohólica
+                  </button>
+                  <button
+                    type="button"
+                    className={nuevoTipo === 'sin_alcohol' ? 'active' : ''}
+                    onClick={() => setNuevoTipo('sin_alcohol')}
+                  >
+                    🥤 Sin alcohol
+                  </button>
+                </div>
+                <div className="field">
+                  <label htmlFor="p-ml-botella">ml por botella/unidad</label>
+                  <input
+                    id="p-ml-botella"
+                    type="number"
+                    value={nuevoMlBotella}
+                    onChange={(e) => setNuevoMlBotella(e.target.value)}
+                  />
+                </div>
+                <div className="field">
+                  <label htmlFor="p-ml-porcion">ml por porción (shot/copa/vaso)</label>
+                  <input
+                    id="p-ml-porcion"
+                    type="number"
+                    value={nuevoMlPorcion}
+                    onChange={(e) => setNuevoMlPorcion(e.target.value)}
+                  />
+                </div>
+                <div className="field">
+                  <label htmlFor="p-costo">Costo de compra por unidad (₡)</label>
+                  <input
+                    id="p-costo"
+                    type="number"
+                    value={nuevoCosto}
+                    onChange={(e) => setNuevoCosto(e.target.value)}
+                  />
+                </div>
+                <div className="field">
+                  <label htmlFor="p-precio">Precio de venta por porción (₡)</label>
+                  <input
+                    id="p-precio"
+                    type="number"
+                    value={nuevoPrecio}
+                    onChange={(e) => setNuevoPrecio(e.target.value)}
+                  />
+                </div>
+                <button className="btn-primary" type="submit">
+                  Agregar producto
+                </button>
+              </form>
+            </Modal>
+          )}
+        </>
+      )}
     </div>
   )
 }

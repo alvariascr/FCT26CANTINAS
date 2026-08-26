@@ -1,12 +1,13 @@
 import { useEffect, useMemo, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
-import type { ResumenProductoRow, StockBarRow, StockBodegaRow } from '../lib/types'
+import Collapsible from '../components/Collapsible'
+import type { ResumenBarRow, ResumenProductoRow, StockBodegaRow } from '../lib/types'
 
 const moneda = new Intl.NumberFormat('es-CR', { maximumFractionDigits: 0 })
 
 export default function Resumen() {
   const [stockBodega, setStockBodega] = useState<StockBodegaRow[]>([])
-  const [stockBares, setStockBares] = useState<StockBarRow[]>([])
+  const [resumenBar, setResumenBar] = useState<ResumenBarRow[]>([])
   const [resumen, setResumen] = useState<ResumenProductoRow[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -14,11 +15,11 @@ export default function Resumen() {
     setLoading(true)
     const [{ data: bodega }, { data: bares }, { data: res }] = await Promise.all([
       supabase.from('v_stock_bodega').select('*').order('nombre'),
-      supabase.from('v_stock_bares').select('*').order('bar_nombre'),
+      supabase.from('v_resumen_bar').select('*'),
       supabase.from('v_resumen_producto').select('*').order('nombre'),
     ])
     setStockBodega(bodega ?? [])
-    setStockBares(bares ?? [])
+    setResumenBar(bares ?? [])
     setResumen(res ?? [])
     setLoading(false)
   }
@@ -26,6 +27,12 @@ export default function Resumen() {
   useEffect(() => {
     cargar()
   }, [])
+
+  const baresVenta = useMemo(
+    () => resumenBar.filter((b) => !b.es_cortesia).sort((a, b) => b.ingreso_total - a.ingreso_total),
+    [resumenBar]
+  )
+  const baresCortesia = useMemo(() => resumenBar.filter((b) => b.es_cortesia), [resumenBar])
 
   const totales = useMemo(() => {
     const ingreso = resumen.reduce((acc, r) => acc + r.ingreso_total, 0)
@@ -35,15 +42,10 @@ export default function Resumen() {
     return { ingreso, costo, ganancia, margen }
   }, [resumen])
 
-  const baresAgrupados = useMemo(() => {
-    const map = new Map<string, StockBarRow[]>()
-    for (const row of stockBares) {
-      const list = map.get(row.bar_nombre) ?? []
-      list.push(row)
-      map.set(row.bar_nombre, list)
-    }
-    return Array.from(map.entries())
-  }, [stockBares])
+  const valorRegaladoTotal = useMemo(
+    () => baresCortesia.reduce((acc, b) => acc + b.valor_equivalente_total, 0),
+    [baresCortesia]
+  )
 
   if (loading) return <div className="empty-state">Cargando resumen...</div>
 
@@ -71,9 +73,12 @@ export default function Resumen() {
           <div className="value">{totales.margen.toFixed(1)}%</div>
         </div>
       </div>
+      <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: -10, marginBottom: 18 }}>
+        El costo incluye todo lo consumido (venta y cortesías); el ingreso solo cuenta lo vendido de
+        verdad, sin las cortesías.
+      </div>
 
-      <div className="section-title">Stock en bodega central</div>
-      <div className="card">
+      <Collapsible title="📦 Stock en bodega central" subtitle={`${stockBodega.length} productos`}>
         {stockBodega.length === 0 ? (
           <div className="empty-state">Sin datos todavía.</div>
         ) : (
@@ -94,39 +99,68 @@ export default function Resumen() {
             </tbody>
           </table>
         )}
-      </div>
+      </Collapsible>
 
-      <div className="section-title">Stock por bar</div>
-      {baresAgrupados.length === 0 ? (
-        <div className="card">
+      <Collapsible title="🍻 Ventas por bar" subtitle={`${baresVenta.length} bares`}>
+        {baresVenta.length === 0 ? (
           <div className="empty-state">Todavía no hay traslados registrados.</div>
-        </div>
-      ) : (
-        baresAgrupados.map(([nombreBar, filas]) => (
-          <div className="card" key={nombreBar}>
-            <strong>{nombreBar}</strong>
-            <table style={{ marginTop: 8 }}>
-              <thead>
-                <tr>
-                  <th>Producto</th>
-                  <th>Stock</th>
+        ) : (
+          <table>
+            <thead>
+              <tr>
+                <th>Bar</th>
+                <th>Vendido</th>
+                <th>Ingreso</th>
+                <th>Ganancia</th>
+              </tr>
+            </thead>
+            <tbody>
+              {baresVenta.map((b) => (
+                <tr key={b.bar_id}>
+                  <td>{b.bar_nombre}</td>
+                  <td>{b.total_vendido}</td>
+                  <td>₡{moneda.format(b.ingreso_total)}</td>
+                  <td>₡{moneda.format(b.ganancia_total)}</td>
                 </tr>
-              </thead>
-              <tbody>
-                {filas.map((f) => (
-                  <tr key={f.producto_id}>
-                    <td>{f.producto_nombre}</td>
-                    <td>{f.stock_bar}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </Collapsible>
+
+      {baresCortesia.length > 0 && (
+        <Collapsible
+          title="🎁 Cortesías / actividades especiales"
+          subtitle={`₡${moneda.format(valorRegaladoTotal)} regalado`}
+        >
+          <table>
+            <thead>
+              <tr>
+                <th>Actividad</th>
+                <th>Entregado</th>
+                <th>Valor equivalente</th>
+                <th>Costo</th>
+              </tr>
+            </thead>
+            <tbody>
+              {baresCortesia.map((b) => (
+                <tr key={b.bar_id}>
+                  <td>{b.bar_nombre}</td>
+                  <td>{b.total_vendido}</td>
+                  <td>₡{moneda.format(b.valor_equivalente_total)}</td>
+                  <td>₡{moneda.format(b.costo_total)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: 10 }}>
+            No suma al ingreso ni a la ganancia del evento — es solo para saber cuánto se regaló y
+            qué hubiera valido.
           </div>
-        ))
+        </Collapsible>
       )}
 
-      <div className="section-title">Ventas por producto</div>
-      <div className="card">
+      <Collapsible title="🗂️ Ventas por producto" subtitle={`${resumen.length} productos`}>
         <table>
           <thead>
             <tr>
@@ -145,7 +179,7 @@ export default function Resumen() {
             ))}
           </tbody>
         </table>
-      </div>
+      </Collapsible>
     </div>
   )
 }

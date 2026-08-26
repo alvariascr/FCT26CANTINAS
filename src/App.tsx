@@ -3,8 +3,8 @@ import { AuthProvider } from './lib/AuthContext'
 import ProtectedRoute from './components/ProtectedRoute'
 import Layout from './components/Layout'
 import Login from './pages/Login'
-import Consumo from './pages/Consumo'
-import Traslado from './pages/Traslado'
+import Incidencia from './pages/Incidencia'
+import Movimientos from './pages/Movimientos'
 import Resumen from './pages/Resumen'
 import Catalogo from './pages/Catalogo'
 
@@ -21,8 +21,8 @@ export default function App() {
               </ProtectedRoute>
             }
           >
-            <Route path="/" element={<Consumo />} />
-            <Route path="/traslado" element={<Traslado />} />
+            <Route path="/" element={<Movimientos />} />
+            <Route path="/incidencia" element={<Incidencia />} />
             <Route path="/resumen" element={<Resumen />} />
             <Route path="/catalogo" element={<Catalogo />} />
           </Route>

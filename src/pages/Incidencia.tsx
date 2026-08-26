@@ -1,33 +1,33 @@
 import { useEffect, useMemo, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import { useAuth } from '../lib/AuthContext'
-import type { Bar, Producto, StockBodegaRow, TipoProducto } from '../lib/types'
+import type { Bar, MotivoIncidencia, Producto, TipoProducto } from '../lib/types'
 
-export default function Traslado() {
+const MOTIVOS: MotivoIncidencia[] = ['Rotura', 'Pérdida', 'Cortesía', 'Otro']
+
+export default function Incidencia() {
   const { session } = useAuth()
   const [bares, setBares] = useState<Bar[]>([])
   const [productos, setProductos] = useState<Producto[]>([])
-  const [stockBodega, setStockBodega] = useState<StockBodegaRow[]>([])
   const [tipo, setTipo] = useState<TipoProducto>('alcoholica')
   const [barId, setBarId] = useState('')
   const [productoId, setProductoId] = useState('')
   const [cantidad, setCantidad] = useState(1)
+  const [motivo, setMotivo] = useState<MotivoIncidencia>(MOTIVOS[0])
+  const [observaciones, setObservaciones] = useState('')
   const [msg, setMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
   const [saving, setSaving] = useState(false)
 
-  async function cargar() {
-    const [{ data: baresData }, { data: productosData }, { data: stockData }] = await Promise.all([
-      supabase.from('bares').select('*').eq('activo', true).order('nombre'),
-      supabase.from('productos').select('*').eq('activo', true).order('nombre'),
-      supabase.from('v_stock_bodega').select('*'),
-    ])
-    setBares(baresData ?? [])
-    setProductos(productosData ?? [])
-    setStockBodega(stockData ?? [])
-    if (baresData && baresData.length > 0) setBarId((prev) => prev || baresData[0].id)
-  }
-
   useEffect(() => {
+    async function cargar() {
+      const [{ data: baresData }, { data: productosData }] = await Promise.all([
+        supabase.from('bares').select('*').eq('activo', true).order('nombre'),
+        supabase.from('productos').select('*').eq('activo', true).order('nombre'),
+      ])
+      setBares(baresData ?? [])
+      setProductos(productosData ?? [])
+      if (baresData && baresData.length > 0) setBarId(baresData[0].id)
+    }
     cargar()
   }, [])
 
@@ -42,36 +42,41 @@ export default function Traslado() {
     }
   }, [productosFiltrados, productoId])
 
-  const stockDisponible = stockBodega.find((s) => s.producto_id === productoId)?.stock_bodega ?? 0
-
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!barId || !productoId || cantidad <= 0) return
     setSaving(true)
     setMsg(null)
-    const { error } = await supabase.from('traslados').insert({
+    const { error } = await supabase.from('incidencias').insert({
       bar_id: barId,
       producto_id: productoId,
       cantidad,
+      motivo,
+      observaciones: observaciones || null,
       usuario_id: session?.user.id,
     })
     setSaving(false)
     if (error) {
       setMsg({ type: 'error', text: 'No se pudo guardar: ' + error.message })
     } else {
-      setMsg({ type: 'success', text: 'Traslado registrado.' })
+      setMsg({ type: 'success', text: 'Incidencia registrada.' })
       setCantidad(1)
-      cargar()
+      setObservaciones('')
     }
   }
 
   return (
     <div>
-      <h2>Trasladar a un bar</h2>
+      <h2>Reportar incidencia</h2>
+      <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginTop: -8 }}>
+        Solo para casos puntuales: se rompió, se perdió, o se regaló suelto en un bar que
+        normalmente sí vende. No hace falta anotar cada trago vendido — eso se calcula solo con
+        el traslado y la devolución final.
+      </p>
       {msg && <div className={`msg ${msg.type}`}>{msg.text}</div>}
       <form onSubmit={handleSubmit}>
         <div className="field">
-          <label htmlFor="bar">Bar destino</label>
+          <label htmlFor="bar">Bar</label>
           <select id="bar" value={barId} onChange={(e) => setBarId(e.target.value)} required>
             {bares.map((b) => (
               <option key={b.id} value={b.id}>
@@ -112,13 +117,10 @@ export default function Traslado() {
               </option>
             ))}
           </select>
-          <div style={{ marginTop: 6, fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-            Stock en bodega: {stockDisponible}
-          </div>
         </div>
 
         <div className="field">
-          <label htmlFor="cantidad">Cantidad a trasladar</label>
+          <label htmlFor="cantidad">Cantidad</label>
           <div className="qty-stepper">
             <button type="button" onClick={() => setCantidad((c) => Math.max(1, c - 1))}>
               −
@@ -137,8 +139,32 @@ export default function Traslado() {
           </div>
         </div>
 
+        <div className="field">
+          <label htmlFor="motivo">Motivo</label>
+          <select
+            id="motivo"
+            value={motivo}
+            onChange={(e) => setMotivo(e.target.value as MotivoIncidencia)}
+          >
+            {MOTIVOS.map((m) => (
+              <option key={m} value={m}>
+                {m}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div className="field">
+          <label htmlFor="observaciones">Observaciones (opcional)</label>
+          <textarea
+            id="observaciones"
+            value={observaciones}
+            onChange={(e) => setObservaciones(e.target.value)}
+          />
+        </div>
+
         <button className="btn-primary" type="submit" disabled={saving || !barId || !productoId}>
-          {saving ? 'Guardando...' : 'Guardar traslado'}
+          {saving ? 'Guardando...' : 'Guardar incidencia'}
         </button>
       </form>
     </div>
