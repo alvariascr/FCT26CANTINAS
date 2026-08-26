@@ -45,6 +45,14 @@ const ETIQUETAS: Record<TablaHistorial, string> = {
   incidencias: '⚠️ Incidencia',
 }
 
+const MODO_A_TABLA: Record<Modo, TablaHistorial> = {
+  entrada: 'entradas_bodega',
+  traslado: 'traslados',
+  devolucion: 'devoluciones',
+}
+
+type FiltroHistorial = 'todos' | TablaHistorial
+
 export default function Movimientos() {
   const { session } = useAuth()
   const toast = useToast()
@@ -60,6 +68,7 @@ export default function Movimientos() {
   const [saving, setSaving] = useState(false)
   const [historial, setHistorial] = useState<ItemHistorial[]>([])
   const [showHistorial, setShowHistorial] = useState(false)
+  const [historialFiltro, setHistorialFiltro] = useState<FiltroHistorial>('todos')
 
   async function cargarHistorial() {
     const [{ data: entradas }, { data: traslados }, { data: devoluciones }, { data: incidencias }] =
@@ -185,6 +194,19 @@ export default function Movimientos() {
     () => productos.filter((p) => p.tipo === tipo),
     [productos, tipo]
   )
+
+  const historialFiltrado = useMemo(
+    () =>
+      historialFiltro === 'todos'
+        ? historial
+        : historial.filter((item) => item.tabla === historialFiltro),
+    [historial, historialFiltro]
+  )
+
+  function abrirHistorial() {
+    setHistorialFiltro(MODO_A_TABLA[modo])
+    setShowHistorial(true)
+  }
 
   useEffect(() => {
     if (productosFiltrados.length > 0 && !productosFiltrados.some((p) => p.id === productoId)) {
@@ -377,20 +399,36 @@ export default function Movimientos() {
         </button>
       </form>
 
-      <button
-        className="btn-secondary"
-        style={{ marginTop: 20 }}
-        onClick={() => setShowHistorial(true)}
-      >
+      <button className="btn-secondary" style={{ marginTop: 20 }} onClick={abrirHistorial}>
         🕒 Ver historial completo ({historial.length})
       </button>
 
       {showHistorial && (
         <Modal title="Historial de movimientos" onClose={() => setShowHistorial(false)}>
-          {historial.length === 0 ? (
-            <div className="empty-state">Todavía no hay movimientos.</div>
+          <div className="filter-chips">
+            <button
+              type="button"
+              className={historialFiltro === 'todos' ? 'active' : ''}
+              onClick={() => setHistorialFiltro('todos')}
+            >
+              Todos
+            </button>
+            {(Object.keys(ETIQUETAS) as TablaHistorial[]).map((tabla) => (
+              <button
+                key={tabla}
+                type="button"
+                className={historialFiltro === tabla ? 'active' : ''}
+                onClick={() => setHistorialFiltro(tabla)}
+              >
+                {ETIQUETAS[tabla]}
+              </button>
+            ))}
+          </div>
+
+          {historialFiltrado.length === 0 ? (
+            <div className="empty-state">No hay movimientos en esta categoría.</div>
           ) : (
-            historial.map((item) => (
+            historialFiltrado.map((item) => (
               <div
                 key={`${item.tabla}-${item.id}`}
                 style={{

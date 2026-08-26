@@ -141,6 +141,32 @@ h2 {
   min-height: 70px;
 }
 
+.filter-chips {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding-bottom: 12px;
+  margin-bottom: 6px;
+  border-bottom: 1px solid var(--border);
+}
+
+.filter-chips button {
+  flex: 0 0 auto;
+  padding: 7px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--surface-alt);
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  white-space: nowrap;
+}
+
+.filter-chips button.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: white;
+}
+
 .type-toggle {
   display: flex;
   gap: 8px;
