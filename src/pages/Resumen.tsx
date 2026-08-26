@@ -1,26 +1,31 @@
 import { useEffect, useMemo, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import Collapsible from '../components/Collapsible'
+import Modal from '../components/Modal'
 import StockBadge from '../components/StockBadge'
-import type { ResumenBarRow, ResumenProductoRow, StockBodegaRow } from '../lib/types'
+import type { MovimientoBarRow, ResumenBarRow, ResumenProductoRow, StockBodegaRow } from '../lib/types'
 
 const moneda = new Intl.NumberFormat('es-CR', { maximumFractionDigits: 0 })
 
 export default function Resumen() {
   const [stockBodega, setStockBodega] = useState<StockBodegaRow[]>([])
   const [resumenBar, setResumenBar] = useState<ResumenBarRow[]>([])
+  const [movimientosBar, setMovimientosBar] = useState<MovimientoBarRow[]>([])
   const [resumen, setResumen] = useState<ResumenProductoRow[]>([])
   const [loading, setLoading] = useState(true)
+  const [barDetalle, setBarDetalle] = useState<{ id: string; nombre: string } | null>(null)
 
   async function cargar() {
     setLoading(true)
-    const [{ data: bodega }, { data: bares }, { data: res }] = await Promise.all([
+    const [{ data: bodega }, { data: bares }, { data: movs }, { data: res }] = await Promise.all([
       supabase.from('v_stock_bodega').select('*').order('nombre'),
       supabase.from('v_resumen_bar').select('*'),
+      supabase.from('v_movimientos_bar').select('*').order('producto_nombre'),
       supabase.from('v_resumen_producto').select('*').order('nombre'),
     ])
     setStockBodega(bodega ?? [])
     setResumenBar(bares ?? [])
+    setMovimientosBar(movs ?? [])
     setResumen(res ?? [])
     setLoading(false)
   }
@@ -46,6 +51,11 @@ export default function Resumen() {
   const valorRegaladoTotal = useMemo(
     () => baresCortesia.reduce((acc, b) => acc + b.valor_equivalente_total, 0),
     [baresCortesia]
+  )
+
+  const detalleFiltrado = useMemo(
+    () => (barDetalle ? movimientosBar.filter((m) => m.bar_id === barDetalle.id) : []),
+    [movimientosBar, barDetalle]
   )
 
   if (loading) return <div className="empty-state">Cargando resumen...</div>
@@ -115,6 +125,7 @@ export default function Resumen() {
                 <th>Vendido</th>
                 <th>Ingreso</th>
                 <th>Ganancia</th>
+                <th></th>
               </tr>
             </thead>
             <tbody>
@@ -124,6 +135,14 @@ export default function Resumen() {
                   <td>{b.total_vendido}</td>
                   <td>₡{moneda.format(b.ingreso_total)}</td>
                   <td>₡{moneda.format(b.ganancia_total)}</td>
+                  <td>
+                    <button
+                      className="icon-btn"
+                      onClick={() => setBarDetalle({ id: b.bar_id, nombre: b.bar_nombre })}
+                    >
+                      Ver detalle
+                    </button>
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -143,6 +162,7 @@ export default function Resumen() {
                 <th>Entregado</th>
                 <th>Valor equivalente</th>
                 <th>Costo</th>
+                <th></th>
               </tr>
             </thead>
             <tbody>
@@ -152,6 +172,14 @@ export default function Resumen() {
                   <td>{b.total_vendido}</td>
                   <td>₡{moneda.format(b.valor_equivalente_total)}</td>
                   <td>₡{moneda.format(b.costo_total)}</td>
+                  <td>
+                    <button
+                      className="icon-btn"
+                      onClick={() => setBarDetalle({ id: b.bar_id, nombre: b.bar_nombre })}
+                    >
+                      Ver detalle
+                    </button>
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -183,6 +211,37 @@ export default function Resumen() {
           </tbody>
         </table>
       </Collapsible>
+
+      {barDetalle && (
+        <Modal title={`Detalle · ${barDetalle.nombre}`} onClose={() => setBarDetalle(null)}>
+          {detalleFiltrado.length === 0 ? (
+            <div className="empty-state">Todavía no hay movimientos en este bar.</div>
+          ) : (
+            <table>
+              <thead>
+                <tr>
+                  <th>Producto</th>
+                  <th>Trasladado</th>
+                  <th>Devuelto</th>
+                  <th>Vendido</th>
+                </tr>
+              </thead>
+              <tbody>
+                {detalleFiltrado.map((m) => (
+                  <tr key={m.producto_id}>
+                    <td>{m.producto_nombre}</td>
+                    <td>{m.total_trasladado}</td>
+                    <td>{m.total_devuelto}</td>
+                    <td>
+                      <StockBadge value={m.vendido} />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </Modal>
+      )}
     </div>
   )
 }
