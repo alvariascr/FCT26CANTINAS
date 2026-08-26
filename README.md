@@ -31,12 +31,12 @@ Editá `.env` y pegá el `Project URL` y la `anon public key` de tu proyecto de 
 npm run dev
 ```
 
-Abrí la URL que te muestre la terminal (normalmente `http://localhost:5173/inventario_licor/`)
+Abrí la URL que te muestre la terminal (normalmente `http://localhost:5173/FCT26CANTINAS/`)
 e iniciá sesión con uno de los usuarios que creaste en el paso 1.5.
 
 ## 3. Publicar en GitHub Pages
 
-1. Creá un repo nuevo en GitHub llamado **`inventario_licor`** (si le ponés otro nombre, actualizá
+1. Creá un repo nuevo en GitHub llamado **`FCT26CANTINAS`** (si le ponés otro nombre, actualizá
    el valor de `base` en `vite.config.ts` para que coincida).
 2. Subí este proyecto a ese repo (rama `main`).
 3. En el repo, andá a **Settings → Pages** y en "Build and deployment" elegí **Source: GitHub Actions**.
@@ -46,7 +46,7 @@ e iniciá sesión con uno de los usuarios que creaste en el paso 1.5.
 
    (los mismos valores que pusiste en tu `.env` local)
 5. Cada `push` a `main` dispara el workflow `.github/workflows/deploy.yml`, que construye la app
-   y la publica. La URL final queda como `https://<tu-usuario>.github.io/inventario_licor/`.
+   y la publica. La URL final queda como `https://<tu-usuario>.github.io/FCT26CANTINAS/`.
 
 > La `anon public key` de Supabase es segura de exponer en una app pública como esta: no da
 > acceso por sí sola, el control de acceso real lo hacen las políticas RLS (solo usuarios logueados
@@ -54,15 +54,23 @@ e iniciá sesión con uno de los usuarios que creaste en el paso 1.5.
 
 ## Cómo está organizado
 
-- **Bodega central**: se carga con "Entradas a bodega" desde la pantalla de Catálogo (reemplaza
-  la hoja "Stock Inicial" del Excel).
-- **Traslados**: mueven stock de la bodega a un bar específico.
-- **Consumo**: cada bar registra sus salidas (venta, cortesía, merma) contra lo que tiene
-  trasladado — reemplaza la bitácora "Día 1-5" del Excel, ya conectada automáticamente con el
-  resumen (a diferencia del Excel, acá no hay doble digitación).
-- **Resumen**: stock en bodega, stock por bar e ingreso/costo/ganancia/margen, todo calculado
-  en vivo con vistas SQL (`v_stock_bodega`, `v_stock_bares`, `v_resumen_producto`).
-- **Catálogo**: alta de productos y bares, edición de precios/costos, y carga de entradas a bodega.
+- **Movimientos**: un solo lugar con tres modos —
+  - **Entrada**: carga stock a la bodega central (compras/reposición).
+  - **Traslado**: mueve stock de la bodega a un bar específico.
+  - **Devolución**: al cierre del evento, cuenta lo que sobró en cada bar y lo devuelve a bodega.
+  - Incluye un **historial** de los últimos movimientos con opción de editar o borrar, por si se
+    carga algo mal.
+- **Incidencia**: para casos puntuales (rotura, pérdida, o una cortesía suelta en un bar que
+  normalmente sí vende) — se resta de lo vendido sin necesidad de una devolución.
+- **Bares de cortesía**: un bar puede marcarse como "cortesía" (ej. una actividad que regala
+  bebida) — se traslada/devuelve igual, pero nunca suma al ingreso ni a la ganancia del evento,
+  solo se ve su "valor equivalente" por separado.
+- **Ganancia = trasladado − devuelto − incidencias**, no un registro trago por trago: así no hay
+  que estar en cada bar anotando cada venta durante el evento.
+- **Resumen**: stock en bodega, ventas por bar (para comparar cuál vendió más), cortesías aparte,
+  y ventas por producto — todo calculado en vivo con vistas SQL, en secciones plegables.
+- **Catálogo**: pestañas de Productos (precio/costo editables, con "porciones por unidad" para
+  licores vendidos por shot) y Bares (con la bandera de cortesía).
 
 ## Stack
 

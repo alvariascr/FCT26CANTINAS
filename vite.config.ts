@@ -5,6 +5,6 @@ import { defineConfig } from 'vite'
 // debe coincidir exactamente con el nombre del repo en GitHub.
 // https://vite.dev/config/
 export default defineConfig({
-  base: '/inventario_licor/',
+  base: '/FCT26CANTINAS/',
   plugins: [react()],
 })
