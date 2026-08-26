@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import { useAuth } from '../lib/AuthContext'
 import { useToast } from '../lib/ToastContext'
-import Collapsible from '../components/Collapsible'
 import Modal from '../components/Modal'
 import StockBadge from '../components/StockBadge'
 import type {
@@ -60,6 +59,7 @@ export default function Movimientos() {
   const [cantidad, setCantidad] = useState(1)
   const [saving, setSaving] = useState(false)
   const [historial, setHistorial] = useState<ItemHistorial[]>([])
+  const [showHistorial, setShowHistorial] = useState(false)
 
   async function cargarHistorial() {
     const [{ data: entradas }, { data: traslados }, { data: devoluciones }, { data: incidencias }] =
@@ -68,22 +68,22 @@ export default function Movimientos() {
           .from('entradas_bodega')
           .select('id, producto_id, cantidad, creado_en, productos(nombre)')
           .order('creado_en', { ascending: false })
-          .limit(20),
+          .limit(100),
         supabase
           .from('traslados')
           .select('id, producto_id, bar_id, cantidad, creado_en, productos(nombre), bares(nombre)')
           .order('creado_en', { ascending: false })
-          .limit(20),
+          .limit(100),
         supabase
           .from('devoluciones')
           .select('id, producto_id, bar_id, cantidad, creado_en, productos(nombre), bares(nombre)')
           .order('creado_en', { ascending: false })
-          .limit(20),
+          .limit(100),
         supabase
           .from('incidencias')
           .select('id, producto_id, bar_id, cantidad, motivo, creado_en, productos(nombre), bares(nombre)')
           .order('creado_en', { ascending: false })
-          .limit(20),
+          .limit(100),
       ])
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -107,7 +107,7 @@ export default function Movimientos() {
       ...(incidencias ?? []).map(toItem('incidencias')),
     ].sort((a, b) => b.creado_en.localeCompare(a.creado_en))
 
-    setHistorial(combinado.slice(0, 20))
+    setHistorial(combinado.slice(0, 100))
   }
 
   async function borrarItem(item: ItemHistorial) {
@@ -377,8 +377,16 @@ export default function Movimientos() {
         </button>
       </form>
 
-      <div style={{ marginTop: 20 }}>
-        <Collapsible title="🕒 Historial reciente" subtitle={`${historial.length} movimientos`}>
+      <button
+        className="btn-primary"
+        style={{ marginTop: 20 }}
+        onClick={() => setShowHistorial(true)}
+      >
+        🕒 Ver historial completo ({historial.length})
+      </button>
+
+      {showHistorial && (
+        <Modal title="Historial de movimientos" onClose={() => setShowHistorial(false)}>
           {historial.length === 0 ? (
             <div className="empty-state">Todavía no hay movimientos.</div>
           ) : (
@@ -418,8 +426,8 @@ export default function Movimientos() {
               </div>
             ))
           )}
-        </Collapsible>
-      </div>
+        </Modal>
+      )}
 
       {editItem && (
         <Modal title={`Editar ${editItem.etiqueta.split(' ')[1]}`} onClose={() => setEditItem(null)}>
