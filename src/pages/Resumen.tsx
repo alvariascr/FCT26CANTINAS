@@ -13,7 +13,11 @@ export default function Resumen() {
   const [movimientosBar, setMovimientosBar] = useState<MovimientoBarRow[]>([])
   const [resumen, setResumen] = useState<ResumenProductoRow[]>([])
   const [loading, setLoading] = useState(true)
-  const [barDetalle, setBarDetalle] = useState<{ id: string; nombre: string } | null>(null)
+  const [barDetalle, setBarDetalle] = useState<{
+    id: string
+    nombre: string
+    esCortesia: boolean
+  } | null>(null)
 
   async function cargar() {
     setLoading(true)
@@ -138,7 +142,9 @@ export default function Resumen() {
                   <td>
                     <button
                       className="icon-btn"
-                      onClick={() => setBarDetalle({ id: b.bar_id, nombre: b.bar_nombre })}
+                      onClick={() =>
+                        setBarDetalle({ id: b.bar_id, nombre: b.bar_nombre, esCortesia: false })
+                      }
                     >
                       Ver detalle
                     </button>
@@ -175,7 +181,9 @@ export default function Resumen() {
                   <td>
                     <button
                       className="icon-btn"
-                      onClick={() => setBarDetalle({ id: b.bar_id, nombre: b.bar_nombre })}
+                      onClick={() =>
+                        setBarDetalle({ id: b.bar_id, nombre: b.bar_nombre, esCortesia: true })
+                      }
                     >
                       Ver detalle
                     </button>
@@ -224,6 +232,7 @@ export default function Resumen() {
                   <th>Trasladado</th>
                   <th>Devuelto</th>
                   <th>Vendido</th>
+                  <th>{barDetalle.esCortesia ? 'Valor equiv.' : 'Ingreso'}</th>
                 </tr>
               </thead>
               <tbody>
@@ -235,8 +244,21 @@ export default function Resumen() {
                     <td>
                       <StockBadge value={m.vendido} />
                     </td>
+                    <td>₡{moneda.format(m.es_cortesia ? m.valor_equivalente : m.ingreso)}</td>
                   </tr>
                 ))}
+                <tr style={{ fontWeight: 700 }}>
+                  <td colSpan={4}>Total</td>
+                  <td>
+                    ₡
+                    {moneda.format(
+                      detalleFiltrado.reduce(
+                        (acc, m) => acc + (m.es_cortesia ? m.valor_equivalente : m.ingreso),
+                        0
+                      )
+                    )}
+                  </td>
+                </tr>
               </tbody>
             </table>
           )}
