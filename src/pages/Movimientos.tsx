@@ -191,10 +191,28 @@ export default function Movimientos() {
   const stockBarActual =
     stockBares.find((s) => s.producto_id === productoId && s.bar_id === barId)?.stock_bar ?? 0
 
+  const excedeStock =
+    (modo === 'traslado' && cantidad > stockBodegaDisponible) ||
+    (modo === 'devolucion' && cantidad > stockBarActual)
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!productoId || cantidad <= 0) return
     if (modo !== 'entrada' && !barId) return
+    if (modo === 'traslado' && cantidad > stockBodegaDisponible) {
+      setMsg({
+        type: 'error',
+        text: `No hay suficiente stock en bodega (disponible: ${stockBodegaDisponible}).`,
+      })
+      return
+    }
+    if (modo === 'devolucion' && cantidad > stockBarActual) {
+      setMsg({
+        type: 'error',
+        text: `No puede devolver más de lo que hay en ese bar (disponible: ${stockBarActual}).`,
+      })
+      return
+    }
     setSaving(true)
     setMsg(null)
 
@@ -305,6 +323,11 @@ export default function Movimientos() {
               Stock actual en ese bar: <StockBadge value={stockBarActual} />
             </div>
           )}
+          {excedeStock && (
+            <div style={{ marginTop: 6, fontSize: '0.85rem', color: 'var(--danger)' }}>
+              ⚠️ La cantidad supera el stock disponible.
+            </div>
+          )}
         </div>
 
         <div className="field">
@@ -340,7 +363,13 @@ export default function Movimientos() {
         <button
           className="btn-primary"
           type="submit"
-          disabled={saving || !productoId || cantidad <= 0 || (modo !== 'entrada' && !barId)}
+          disabled={
+            saving ||
+            !productoId ||
+            cantidad <= 0 ||
+            (modo !== 'entrada' && !barId) ||
+            excedeStock
+          }
         >
           {saving
             ? 'Guardando...'
