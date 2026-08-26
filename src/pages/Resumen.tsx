@@ -97,24 +97,26 @@ export default function Resumen() {
         {stockBodega.length === 0 ? (
           <div className="empty-state">Sin datos todavía.</div>
         ) : (
-          <table>
-            <thead>
-              <tr>
-                <th>Producto</th>
-                <th>Stock</th>
-              </tr>
-            </thead>
-            <tbody>
-              {stockBodega.map((s) => (
-                <tr key={s.producto_id}>
-                  <td>{s.nombre}</td>
-                  <td>
-                    <StockBadge value={s.stock_bodega} />
-                  </td>
+          <div className="table-scroll">
+            <table>
+              <thead>
+                <tr>
+                  <th>Producto</th>
+                  <th>Stock</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {stockBodega.map((s) => (
+                  <tr key={s.producto_id}>
+                    <td>{s.nombre}</td>
+                    <td>
+                      <StockBadge value={s.stock_bodega} />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </Collapsible>
 
@@ -122,37 +124,36 @@ export default function Resumen() {
         {baresVenta.length === 0 ? (
           <div className="empty-state">Todavía no hay traslados registrados.</div>
         ) : (
-          <table>
-            <thead>
-              <tr>
-                <th>Bar</th>
-                <th>Vendido</th>
-                <th>Ingreso</th>
-                <th>Ganancia</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody>
-              {baresVenta.map((b) => (
-                <tr key={b.bar_id}>
-                  <td>{b.bar_nombre}</td>
-                  <td>{b.total_vendido}</td>
-                  <td>₡{moneda.format(b.ingreso_total)}</td>
-                  <td>₡{moneda.format(b.ganancia_total)}</td>
-                  <td>
-                    <button
-                      className="icon-btn"
-                      onClick={() =>
-                        setBarDetalle({ id: b.bar_id, nombre: b.bar_nombre, esCortesia: false })
-                      }
-                    >
-                      Ver detalle
-                    </button>
-                  </td>
+          <div className="table-scroll">
+            <table>
+              <thead>
+                <tr>
+                  <th>Bar</th>
+                  <th>Vendido</th>
+                  <th>Ingreso</th>
+                  <th>Ganancia</th>
+                  <th></th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {baresVenta.map((b) => (
+                  <tr
+                    key={b.bar_id}
+                    className="clickable"
+                    onClick={() =>
+                      setBarDetalle({ id: b.bar_id, nombre: b.bar_nombre, esCortesia: false })
+                    }
+                  >
+                    <td>{b.bar_nombre}</td>
+                    <td>{b.total_vendido}</td>
+                    <td>₡{moneda.format(b.ingreso_total)}</td>
+                    <td>₡{moneda.format(b.ganancia_total)}</td>
+                    <td className="chevron-cell">›</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </Collapsible>
 
@@ -161,37 +162,36 @@ export default function Resumen() {
           title="🎁 Cortesías / actividades especiales"
           subtitle={`₡${moneda.format(valorRegaladoTotal)} regalado`}
         >
-          <table>
-            <thead>
-              <tr>
-                <th>Actividad</th>
-                <th>Entregado</th>
-                <th>Valor equivalente</th>
-                <th>Costo</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody>
-              {baresCortesia.map((b) => (
-                <tr key={b.bar_id}>
-                  <td>{b.bar_nombre}</td>
-                  <td>{b.total_vendido}</td>
-                  <td>₡{moneda.format(b.valor_equivalente_total)}</td>
-                  <td>₡{moneda.format(b.costo_total)}</td>
-                  <td>
-                    <button
-                      className="icon-btn"
-                      onClick={() =>
-                        setBarDetalle({ id: b.bar_id, nombre: b.bar_nombre, esCortesia: true })
-                      }
-                    >
-                      Ver detalle
-                    </button>
-                  </td>
+          <div className="table-scroll">
+            <table>
+              <thead>
+                <tr>
+                  <th>Actividad</th>
+                  <th>Entregado</th>
+                  <th>Valor equiv.</th>
+                  <th>Costo</th>
+                  <th></th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {baresCortesia.map((b) => (
+                  <tr
+                    key={b.bar_id}
+                    className="clickable"
+                    onClick={() =>
+                      setBarDetalle({ id: b.bar_id, nombre: b.bar_nombre, esCortesia: true })
+                    }
+                  >
+                    <td>{b.bar_nombre}</td>
+                    <td>{b.total_vendido}</td>
+                    <td>₡{moneda.format(b.valor_equivalente_total)}</td>
+                    <td>₡{moneda.format(b.costo_total)}</td>
+                    <td className="chevron-cell">›</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
           <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: 10 }}>
             No suma al ingreso ni a la ganancia del evento — es solo para saber cuánto se regaló y
             qué hubiera valido.
@@ -200,24 +200,26 @@ export default function Resumen() {
       )}
 
       <Collapsible title="🗂️ Ventas por producto" subtitle={`${resumen.length} productos`}>
-        <table>
-          <thead>
-            <tr>
-              <th>Producto</th>
-              <th>Vendido</th>
-              <th>Ganancia</th>
-            </tr>
-          </thead>
-          <tbody>
-            {resumen.map((r) => (
-              <tr key={r.producto_id}>
-                <td>{r.nombre}</td>
-                <td>{r.total_vendido}</td>
-                <td>₡{moneda.format(r.ganancia_total)}</td>
+        <div className="table-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>Producto</th>
+                <th>Vendido</th>
+                <th>Ganancia</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {resumen.map((r) => (
+                <tr key={r.producto_id}>
+                  <td>{r.nombre}</td>
+                  <td>{r.total_vendido}</td>
+                  <td>₡{moneda.format(r.ganancia_total)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </Collapsible>
 
       {barDetalle && (
@@ -225,42 +227,44 @@ export default function Resumen() {
           {detalleFiltrado.length === 0 ? (
             <div className="empty-state">Todavía no hay movimientos en este bar.</div>
           ) : (
-            <table>
-              <thead>
-                <tr>
-                  <th>Producto</th>
-                  <th>Trasladado</th>
-                  <th>Devuelto</th>
-                  <th>Vendido</th>
-                  <th>{barDetalle.esCortesia ? 'Valor equiv.' : 'Ingreso'}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {detalleFiltrado.map((m) => (
-                  <tr key={m.producto_id}>
-                    <td>{m.producto_nombre}</td>
-                    <td>{m.total_trasladado}</td>
-                    <td>{m.total_devuelto}</td>
-                    <td>
-                      <StockBadge value={m.vendido} />
-                    </td>
-                    <td>₡{moneda.format(m.es_cortesia ? m.valor_equivalente : m.ingreso)}</td>
+            <div className="table-scroll">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Producto</th>
+                    <th>Traslad.</th>
+                    <th>Devuelto</th>
+                    <th>Vendido</th>
+                    <th>{barDetalle.esCortesia ? 'Valor equiv.' : 'Ingreso'}</th>
                   </tr>
-                ))}
-                <tr style={{ fontWeight: 700 }}>
-                  <td colSpan={4}>Total</td>
-                  <td>
-                    ₡
-                    {moneda.format(
-                      detalleFiltrado.reduce(
-                        (acc, m) => acc + (m.es_cortesia ? m.valor_equivalente : m.ingreso),
-                        0
-                      )
-                    )}
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {detalleFiltrado.map((m) => (
+                    <tr key={m.producto_id}>
+                      <td>{m.producto_nombre}</td>
+                      <td>{m.total_trasladado}</td>
+                      <td>{m.total_devuelto}</td>
+                      <td>
+                        <StockBadge value={m.vendido} />
+                      </td>
+                      <td>₡{moneda.format(m.es_cortesia ? m.valor_equivalente : m.ingreso)}</td>
+                    </tr>
+                  ))}
+                  <tr style={{ fontWeight: 700 }}>
+                    <td colSpan={4}>Total</td>
+                    <td>
+                      ₡
+                      {moneda.format(
+                        detalleFiltrado.reduce(
+                          (acc, m) => acc + (m.es_cortesia ? m.valor_equivalente : m.ingreso),
+                          0
+                        )
+                      )}
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
           )}
         </Modal>
       )}
