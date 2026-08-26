@@ -130,8 +130,12 @@ export default function Incidencia() {
               type="number"
               inputMode="numeric"
               min={1}
-              value={cantidad}
-              onChange={(e) => setCantidad(Math.max(1, Number(e.target.value) || 1))}
+              value={cantidad === 0 ? '' : cantidad}
+              onChange={(e) => {
+                const v = e.target.value
+                setCantidad(v === '' ? 0 : Math.max(0, Math.trunc(Number(v)) || 0))
+              }}
+              onBlur={() => setCantidad((c) => (c <= 0 ? 1 : c))}
             />
             <button type="button" onClick={() => setCantidad((c) => c + 1)}>
               +
@@ -163,7 +167,11 @@ export default function Incidencia() {
           />
         </div>
 
-        <button className="btn-primary" type="submit" disabled={saving || !barId || !productoId}>
+        <button
+          className="btn-primary"
+          type="submit"
+          disabled={saving || !barId || !productoId || cantidad <= 0}
+        >
           {saving ? 'Guardando...' : 'Guardar incidencia'}
         </button>
       </form>

@@ -323,8 +323,12 @@ export default function Movimientos() {
               type="number"
               inputMode="numeric"
               min={1}
-              value={cantidad}
-              onChange={(e) => setCantidad(Math.max(1, Number(e.target.value) || 1))}
+              value={cantidad === 0 ? '' : cantidad}
+              onChange={(e) => {
+                const v = e.target.value
+                setCantidad(v === '' ? 0 : Math.max(0, Math.trunc(Number(v)) || 0))
+              }}
+              onBlur={() => setCantidad((c) => (c <= 0 ? 1 : c))}
             />
             <button type="button" onClick={() => setCantidad((c) => c + 1)}>
               +
@@ -335,7 +339,7 @@ export default function Movimientos() {
         <button
           className="btn-primary"
           type="submit"
-          disabled={saving || !productoId || (modo !== 'entrada' && !barId)}
+          disabled={saving || !productoId || cantidad <= 0 || (modo !== 'entrada' && !barId)}
         >
           {saving
             ? 'Guardando...'
@@ -434,8 +438,12 @@ export default function Movimientos() {
                 id="edit-cantidad"
                 type="number"
                 min={1}
-                value={editCantidad}
-                onChange={(e) => setEditCantidad(Math.max(1, Number(e.target.value) || 1))}
+                value={editCantidad === 0 ? '' : editCantidad}
+                onChange={(e) => {
+                  const v = e.target.value
+                  setEditCantidad(v === '' ? 0 : Math.max(0, Math.trunc(Number(v)) || 0))
+                }}
+                onBlur={() => setEditCantidad((c) => (c <= 0 ? 1 : c))}
                 required
               />
             </div>
