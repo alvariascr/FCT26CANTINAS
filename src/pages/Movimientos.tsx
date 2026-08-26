@@ -378,7 +378,7 @@ export default function Movimientos() {
       </form>
 
       <button
-        className="btn-primary"
+        className="btn-secondary"
         style={{ marginTop: 20 }}
         onClick={() => setShowHistorial(true)}
       >

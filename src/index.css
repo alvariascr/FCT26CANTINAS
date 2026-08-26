@@ -182,6 +182,21 @@ h2 {
   opacity: 0.5;
 }
 
+.btn-secondary {
+  width: 100%;
+  padding: 12px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.btn-secondary:active {
+  background: var(--surface-alt);
+}
+
 .qty-stepper {
   display: flex;
   align-items: center;
