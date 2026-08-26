@@ -131,6 +131,7 @@ export default function Resumen() {
                   <th>Bar</th>
                   <th>Vendido</th>
                   <th>Ingreso</th>
+                  <th>Costo</th>
                   <th>Ganancia</th>
                   <th></th>
                 </tr>
@@ -147,6 +148,7 @@ export default function Resumen() {
                     <td>{b.bar_nombre}</td>
                     <td>{b.total_vendido}</td>
                     <td>₡{moneda.format(b.ingreso_total)}</td>
+                    <td>₡{moneda.format(b.costo_total)}</td>
                     <td>₡{moneda.format(b.ganancia_total)}</td>
                     <td className="chevron-cell">›</td>
                   </tr>
@@ -206,6 +208,8 @@ export default function Resumen() {
               <tr>
                 <th>Producto</th>
                 <th>Vendido</th>
+                <th>Ingreso</th>
+                <th>Costo</th>
                 <th>Ganancia</th>
               </tr>
             </thead>
@@ -214,6 +218,8 @@ export default function Resumen() {
                 <tr key={r.producto_id}>
                   <td>{r.nombre}</td>
                   <td>{r.total_vendido}</td>
+                  <td>₡{moneda.format(r.ingreso_total)}</td>
+                  <td>₡{moneda.format(r.costo_total)}</td>
                   <td>₡{moneda.format(r.ganancia_total)}</td>
                 </tr>
               ))}
