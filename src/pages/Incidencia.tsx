@@ -1,12 +1,14 @@
 import { useEffect, useMemo, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import { useAuth } from '../lib/AuthContext'
+import { useToast } from '../lib/ToastContext'
 import type { Bar, MotivoIncidencia, Producto, TipoProducto } from '../lib/types'
 
 const MOTIVOS: MotivoIncidencia[] = ['Rotura', 'Pérdida', 'Cortesía', 'Otro']
 
 export default function Incidencia() {
   const { session } = useAuth()
+  const toast = useToast()
   const [bares, setBares] = useState<Bar[]>([])
   const [productos, setProductos] = useState<Producto[]>([])
   const [tipo, setTipo] = useState<TipoProducto>('alcoholica')
@@ -15,7 +17,6 @@ export default function Incidencia() {
   const [cantidad, setCantidad] = useState(1)
   const [motivo, setMotivo] = useState<MotivoIncidencia>(MOTIVOS[0])
   const [observaciones, setObservaciones] = useState('')
-  const [msg, setMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
   const [saving, setSaving] = useState(false)
 
   useEffect(() => {
@@ -46,7 +47,6 @@ export default function Incidencia() {
     e.preventDefault()
     if (!barId || !productoId || cantidad <= 0) return
     setSaving(true)
-    setMsg(null)
     const { error } = await supabase.from('incidencias').insert({
       bar_id: barId,
       producto_id: productoId,
@@ -57,9 +57,9 @@ export default function Incidencia() {
     })
     setSaving(false)
     if (error) {
-      setMsg({ type: 'error', text: 'No se pudo guardar: ' + error.message })
+      toast.show('No se pudo guardar: ' + error.message, 'error')
     } else {
-      setMsg({ type: 'success', text: 'Incidencia registrada.' })
+      toast.show('Incidencia registrada.')
       setCantidad(1)
       setObservaciones('')
     }
@@ -73,7 +73,6 @@ export default function Incidencia() {
         normalmente sí vende. No hace falta anotar cada trago vendido — eso se calcula solo con
         el traslado y la devolución final.
       </p>
-      {msg && <div className={`msg ${msg.type}`}>{msg.text}</div>}
       <form onSubmit={handleSubmit}>
         <div className="field">
           <label htmlFor="bar">Bar</label>

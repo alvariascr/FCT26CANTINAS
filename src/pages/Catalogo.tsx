@@ -1,6 +1,7 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import Modal from '../components/Modal'
+import { useToast } from '../lib/ToastContext'
 import type { Bar, Producto, TipoProducto } from '../lib/types'
 
 const moneda = new Intl.NumberFormat('es-CR', { maximumFractionDigits: 0 })
@@ -8,10 +9,10 @@ const moneda = new Intl.NumberFormat('es-CR', { maximumFractionDigits: 0 })
 type Tab = 'productos' | 'bares'
 
 export default function Catalogo() {
+  const toast = useToast()
   const [tab, setTab] = useState<Tab>('productos')
   const [productos, setProductos] = useState<Producto[]>([])
   const [bares, setBares] = useState<Bar[]>([])
-  const [msg, setMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
 
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const [showNuevoProducto, setShowNuevoProducto] = useState(false)
@@ -52,7 +53,7 @@ export default function Catalogo() {
       precio_venta_porcion: Number(nuevoPrecio) || 0,
     })
     if (error) {
-      setMsg({ type: 'error', text: 'No se pudo agregar el producto: ' + error.message })
+      toast.show('No se pudo agregar el producto: ' + error.message, 'error')
       return
     }
     setNuevoNombre('')
@@ -61,7 +62,7 @@ export default function Catalogo() {
     setNuevoCosto('')
     setNuevoPrecio('')
     setShowNuevoProducto(false)
-    setMsg({ type: 'success', text: 'Producto agregado.' })
+    toast.show('Producto agregado.')
     cargar()
   }
 
@@ -71,9 +72,9 @@ export default function Catalogo() {
       .update({ costo_compra: p.costo_compra, precio_venta_porcion: p.precio_venta_porcion })
       .eq('id', p.id)
     if (error) {
-      setMsg({ type: 'error', text: 'No se pudo guardar: ' + error.message })
+      toast.show('No se pudo guardar: ' + error.message, 'error')
     } else {
-      setMsg({ type: 'success', text: `${p.nombre} actualizado.` })
+      toast.show(`${p.nombre} actualizado.`)
       setExpandedId(null)
     }
   }
@@ -96,12 +97,13 @@ export default function Catalogo() {
       .from('bares')
       .insert({ nombre: nuevoBar.trim(), es_cortesia: nuevoBarCortesia })
     if (error) {
-      setMsg({ type: 'error', text: 'No se pudo agregar el bar: ' + error.message })
+      toast.show('No se pudo agregar el bar: ' + error.message, 'error')
       return
     }
     setNuevoBar('')
     setNuevoBarCortesia(false)
     setShowNuevoBar(false)
+    toast.show('Bar agregado.')
     cargar()
   }
 
@@ -118,7 +120,6 @@ export default function Catalogo() {
   return (
     <div>
       <h2>Catálogo</h2>
-      {msg && <div className={`msg ${msg.type}`}>{msg.text}</div>}
 
       <div className="type-toggle">
         <button

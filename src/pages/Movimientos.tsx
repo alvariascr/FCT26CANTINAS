@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import { useAuth } from '../lib/AuthContext'
+import { useToast } from '../lib/ToastContext'
 import Collapsible from '../components/Collapsible'
 import Modal from '../components/Modal'
 import StockBadge from '../components/StockBadge'
@@ -47,6 +48,7 @@ const ETIQUETAS: Record<TablaHistorial, string> = {
 
 export default function Movimientos() {
   const { session } = useAuth()
+  const toast = useToast()
   const [modo, setModo] = useState<Modo>('traslado')
   const [bares, setBares] = useState<Bar[]>([])
   const [productos, setProductos] = useState<Producto[]>([])
@@ -56,7 +58,6 @@ export default function Movimientos() {
   const [barId, setBarId] = useState('')
   const [productoId, setProductoId] = useState('')
   const [cantidad, setCantidad] = useState(1)
-  const [msg, setMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
   const [saving, setSaving] = useState(false)
   const [historial, setHistorial] = useState<ItemHistorial[]>([])
 
@@ -111,9 +112,14 @@ export default function Movimientos() {
 
   async function borrarItem(item: ItemHistorial) {
     if (!confirm(`¿Borrar este ${item.etiqueta.split(' ')[1]}?`)) return
-    await supabase.from(item.tabla).delete().eq('id', item.id)
+    const { error } = await supabase.from(item.tabla).delete().eq('id', item.id)
     cargarHistorial()
     cargar()
+    if (error) {
+      toast.show('No se pudo borrar: ' + error.message, 'error')
+    } else {
+      toast.show('Borrado.')
+    }
   }
 
   const [editItem, setEditItem] = useState<ItemHistorial | null>(null)
@@ -149,8 +155,9 @@ export default function Movimientos() {
       setEditItem(null)
       cargarHistorial()
       cargar()
+      toast.show('Cambios guardados.')
     } else {
-      alert('No se pudo guardar: ' + error.message)
+      toast.show('No se pudo guardar: ' + error.message, 'error')
     }
   }
 
@@ -200,21 +207,14 @@ export default function Movimientos() {
     if (!productoId || cantidad <= 0) return
     if (modo !== 'entrada' && !barId) return
     if (modo === 'traslado' && cantidad > stockBodegaDisponible) {
-      setMsg({
-        type: 'error',
-        text: `No hay suficiente stock en bodega (disponible: ${stockBodegaDisponible}).`,
-      })
+      toast.show(`No hay suficiente stock en bodega (disponible: ${stockBodegaDisponible}).`, 'error')
       return
     }
     if (modo === 'devolucion' && cantidad > stockBarActual) {
-      setMsg({
-        type: 'error',
-        text: `No puede devolver más de lo que hay en ese bar (disponible: ${stockBarActual}).`,
-      })
+      toast.show(`No puede devolver más de lo que hay en ese bar (disponible: ${stockBarActual}).`, 'error')
       return
     }
     setSaving(true)
-    setMsg(null)
 
     const { error } =
       modo === 'entrada'
@@ -231,17 +231,15 @@ export default function Movimientos() {
 
     setSaving(false)
     if (error) {
-      setMsg({ type: 'error', text: 'No se pudo guardar: ' + error.message })
+      toast.show('No se pudo guardar: ' + error.message, 'error')
     } else {
-      setMsg({
-        type: 'success',
-        text:
-          modo === 'entrada'
-            ? 'Entrada a bodega registrada.'
-            : modo === 'traslado'
-              ? 'Traslado registrado.'
-              : 'Devolución registrada.',
-      })
+      toast.show(
+        modo === 'entrada'
+          ? 'Entrada a bodega registrada.'
+          : modo === 'traslado'
+            ? 'Traslado registrado.'
+            : 'Devolución registrada.'
+      )
       setCantidad(1)
       cargar()
       cargarHistorial()
@@ -264,8 +262,6 @@ export default function Movimientos() {
           </button>
         ))}
       </div>
-
-      {msg && <div className={`msg ${msg.type}`}>{msg.text}</div>}
 
       <form onSubmit={handleSubmit}>
         {modo !== 'entrada' && (
