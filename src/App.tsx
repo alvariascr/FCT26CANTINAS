@@ -8,6 +8,7 @@ import Incidencia from './pages/Incidencia'
 import Movimientos from './pages/Movimientos'
 import Resumen from './pages/Resumen'
 import Catalogo from './pages/Catalogo'
+import Reporte from './pages/Reporte'
 
 export default function App() {
   return (
@@ -16,6 +17,14 @@ export default function App() {
         <ToastProvider>
           <Routes>
             <Route path="/login" element={<Login />} />
+            <Route
+              path="/reporte"
+              element={
+                <ProtectedRoute>
+                  <Reporte />
+                </ProtectedRoute>
+              }
+            />
             <Route
               element={
                 <ProtectedRoute>

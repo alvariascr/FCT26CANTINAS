@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { supabase } from '../lib/supabaseClient'
 import Collapsible from '../components/Collapsible'
 import Modal from '../components/Modal'
@@ -92,6 +93,10 @@ export default function Resumen() {
         El costo incluye todo lo consumido (venta y cortesías); el ingreso solo cuenta lo vendido de
         verdad, sin las cortesías.
       </div>
+
+      <Link to="/reporte" className="btn-secondary" style={{ display: 'block', textAlign: 'center', marginBottom: 18 }}>
+        🖨️ Ver reporte de cierre (PDF / Excel)
+      </Link>
 
       <Collapsible title="📦 Stock en bodega central" subtitle={`${stockBodega.length} productos`}>
         {stockBodega.length === 0 ? (
