@@ -321,6 +321,7 @@ th {
 }
 
 .summary-tile {
+  container-type: inline-size;
   min-width: 0;
   background: var(--surface);
   border: 1px solid var(--border);
@@ -335,11 +336,13 @@ th {
 }
 
 .summary-tile .value {
-  font-size: clamp(0.9rem, 4.5vw, 1.15rem);
+  font-size: clamp(0.65rem, 11cqw, 1.15rem);
   font-weight: 700;
-  word-break: break-word;
-  overflow-wrap: anywhere;
   line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: block;
 }
 
 .summary-tile .value.negative {
@@ -665,6 +668,7 @@ th {
 }
 
 .reporte-tile {
+  container-type: inline-size;
   min-width: 0;
   border: 1px solid #d7e3f5;
   border-left: 4px solid #3a6bc9;
@@ -684,11 +688,13 @@ th {
 }
 
 .reporte-tile strong {
-  font-size: clamp(0.85rem, 3.2vw, 1.05rem);
+  font-size: clamp(0.6rem, 13cqw, 1.05rem);
   color: #16233d;
-  word-break: break-word;
-  overflow-wrap: anywhere;
   line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: block;
 }
 
 @media (max-width: 480px) {
