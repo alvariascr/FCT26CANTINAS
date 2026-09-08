@@ -22,7 +22,9 @@ export default function Collapsible({
           <span className="collapsible-chevron">{open ? '▲' : '▼'}</span>
         </span>
       </button>
-      {open && <div className="collapsible-body">{children}</div>}
+      <div className="collapsible-body" hidden={!open}>
+        {children}
+      </div>
     </div>
   )
 }

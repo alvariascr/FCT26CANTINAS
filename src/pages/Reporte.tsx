@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabaseClient'
 import { generarExcel } from '../lib/exportExcel'
 import StockBadge from '../components/StockBadge'
+import Collapsible from '../components/Collapsible'
 import type { ResumenBarRow, ResumenProductoRow, StockBodegaRow } from '../lib/types'
 
 const moneda = new Intl.NumberFormat('es-CR', { maximumFractionDigits: 0 })
@@ -97,63 +98,64 @@ export default function Reporte() {
           </div>
         </div>
 
-        <h2>📦 Stock en bodega central</h2>
-        <table>
-          <thead>
-            <tr>
-              <th>Producto</th>
-              <th>Entradas</th>
-              <th>Trasladado</th>
-              <th>Devuelto</th>
-              <th>Stock actual</th>
-            </tr>
-          </thead>
-          <tbody>
-            {stockBodega.map((s) => (
-              <tr key={s.producto_id}>
-                <td>{s.nombre}</td>
-                <td>{s.total_entradas}</td>
-                <td>{s.total_trasladado}</td>
-                <td>{s.total_devuelto}</td>
-                <td>
-                  <StockBadge value={s.stock_bodega} />
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-
-        <h2>🍻 Ventas por bar</h2>
-        {baresVenta.length === 0 ? (
-          <p>Sin traslados registrados.</p>
-        ) : (
+        <Collapsible title="📦 Stock en bodega central" subtitle={`${stockBodega.length} productos`}>
           <table>
             <thead>
               <tr>
-                <th>Bar</th>
-                <th>Vendido</th>
-                <th>Ingreso</th>
-                <th>Costo</th>
-                <th>Ganancia</th>
+                <th>Producto</th>
+                <th>Entradas</th>
+                <th>Trasladado</th>
+                <th>Devuelto</th>
+                <th>Stock actual</th>
               </tr>
             </thead>
             <tbody>
-              {baresVenta.map((b) => (
-                <tr key={b.bar_id}>
-                  <td>{b.bar_nombre}</td>
-                  <td>{b.total_vendido}</td>
-                  <td>₡{moneda.format(b.ingreso_total)}</td>
-                  <td>₡{moneda.format(b.costo_total)}</td>
-                  <td>₡{moneda.format(b.ganancia_total)}</td>
+              {stockBodega.map((s) => (
+                <tr key={s.producto_id}>
+                  <td>{s.nombre}</td>
+                  <td>{s.total_entradas}</td>
+                  <td>{s.total_trasladado}</td>
+                  <td>{s.total_devuelto}</td>
+                  <td>
+                    <StockBadge value={s.stock_bodega} />
+                  </td>
                 </tr>
               ))}
             </tbody>
           </table>
-        )}
+        </Collapsible>
+
+        <Collapsible title="🍻 Ventas por bar" subtitle={`${baresVenta.length} bares`}>
+          {baresVenta.length === 0 ? (
+            <p>Sin traslados registrados.</p>
+          ) : (
+            <table>
+              <thead>
+                <tr>
+                  <th>Bar</th>
+                  <th>Vendido</th>
+                  <th>Ingreso</th>
+                  <th>Costo</th>
+                  <th>Ganancia</th>
+                </tr>
+              </thead>
+              <tbody>
+                {baresVenta.map((b) => (
+                  <tr key={b.bar_id}>
+                    <td>{b.bar_nombre}</td>
+                    <td>{b.total_vendido}</td>
+                    <td>₡{moneda.format(b.ingreso_total)}</td>
+                    <td>₡{moneda.format(b.costo_total)}</td>
+                    <td>₡{moneda.format(b.ganancia_total)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </Collapsible>
 
         {baresCortesia.length > 0 && (
-          <>
-            <h2>🎁 Cortesías / actividades especiales</h2>
+          <Collapsible title="🎁 Cortesías / actividades especiales">
             <table>
               <thead>
                 <tr>
@@ -178,32 +180,33 @@ export default function Reporte() {
               No suma al ingreso ni a la ganancia del evento — es solo para saber cuánto se regaló
               y qué hubiera valido.
             </p>
-          </>
+          </Collapsible>
         )}
 
-        <h2>🗂️ Ventas por producto</h2>
-        <table>
-          <thead>
-            <tr>
-              <th>Producto</th>
-              <th>Vendido</th>
-              <th>Ingreso</th>
-              <th>Costo</th>
-              <th>Ganancia</th>
-            </tr>
-          </thead>
-          <tbody>
-            {resumen.map((r) => (
-              <tr key={r.producto_id}>
-                <td>{r.nombre}</td>
-                <td>{r.total_vendido}</td>
-                <td>₡{moneda.format(r.ingreso_total)}</td>
-                <td>₡{moneda.format(r.costo_total)}</td>
-                <td>₡{moneda.format(r.ganancia_total)}</td>
+        <Collapsible title="🗂️ Ventas por producto" subtitle={`${resumen.length} productos`}>
+          <table>
+            <thead>
+              <tr>
+                <th>Producto</th>
+                <th>Vendido</th>
+                <th>Ingreso</th>
+                <th>Costo</th>
+                <th>Ganancia</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {resumen.map((r) => (
+                <tr key={r.producto_id}>
+                  <td>{r.nombre}</td>
+                  <td>{r.total_vendido}</td>
+                  <td>₡{moneda.format(r.ingreso_total)}</td>
+                  <td>₡{moneda.format(r.costo_total)}</td>
+                  <td>₡{moneda.format(r.ganancia_total)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </Collapsible>
       </div>
     </div>
   )

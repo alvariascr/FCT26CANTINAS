@@ -585,6 +585,30 @@ th {
   padding-bottom: 6px;
 }
 
+.reporte .collapsible {
+  background: #ffffff;
+  border: 1px solid #d7e3f5;
+  border-radius: 8px;
+  margin: 18px 0;
+}
+
+.reporte .collapsible-header {
+  padding: 12px 14px;
+  color: #16233d;
+  font-size: 0.95rem;
+}
+
+.reporte .collapsible-subtitle,
+.reporte .collapsible-chevron {
+  color: #5f7599;
+}
+
+.reporte .collapsible-body {
+  padding: 0 14px 14px;
+  border-top: 1px solid #d7e3f5;
+  padding-top: 12px;
+}
+
 .reporte table {
   width: 100%;
   border-collapse: collapse;
@@ -694,6 +718,20 @@ th {
 
   .reporte-band {
     break-after: avoid;
+  }
+
+  .reporte .collapsible-body[hidden] {
+    display: block !important;
+    padding: 14px;
+  }
+
+  .reporte .collapsible-chevron {
+    display: none;
+  }
+
+  .reporte .collapsible {
+    break-inside: avoid;
+    border: none;
   }
 
   tr {
