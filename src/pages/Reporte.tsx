@@ -136,36 +136,39 @@ export default function Reporte() {
         </button>
       </div>
 
-      <h1>🍻 Inventario Fiesta</h1>
-      <p className="reporte-subtitulo">Reporte de cierre del evento</p>
-      <p className="reporte-fecha">Generado el {new Date().toLocaleString('es-CR')}</p>
-
-      <div className="reporte-summary">
-        <div className="reporte-tile">
-          <span>Ingreso total</span>
-          <strong>₡{moneda.format(totales.ingreso)}</strong>
-        </div>
-        <div className="reporte-tile">
-          <span>Costo total</span>
-          <strong>₡{moneda.format(totales.costo)}</strong>
-        </div>
-        <div className="reporte-tile">
-          <span>Ganancia neta</span>
-          <strong>₡{moneda.format(totales.ganancia)}</strong>
-        </div>
-        <div className="reporte-tile">
-          <span>Margen</span>
-          <strong>{totales.margen.toFixed(1)}%</strong>
-        </div>
+      <div className="reporte-band">
+        <h1>🍻 Inventario Fiesta</h1>
+        <p className="reporte-subtitulo">Reporte de cierre del evento</p>
+        <p className="reporte-fecha">Generado el {new Date().toLocaleString('es-CR')}</p>
       </div>
 
-      <BarChart title="Stock actual en bodega" unidad="unidades" datos={stockActual} />
+      <div className="reporte-body">
+        <div className="reporte-summary">
+          <div className="reporte-tile">
+            <span>Ingreso total</span>
+            <strong>₡{moneda.format(totales.ingreso)}</strong>
+          </div>
+          <div className="reporte-tile">
+            <span>Costo total</span>
+            <strong>₡{moneda.format(totales.costo)}</strong>
+          </div>
+          <div className="reporte-tile">
+            <span>Ganancia neta</span>
+            <strong>₡{moneda.format(totales.ganancia)}</strong>
+          </div>
+          <div className="reporte-tile">
+            <span>Margen</span>
+            <strong>{totales.margen.toFixed(1)}%</strong>
+          </div>
+        </div>
 
-      <BarChart title="Ganancia por bar" unidad="money" datos={gananciaPorBar} />
+        <BarChart title="📦 Stock actual en bodega" unidad="unidades" datos={stockActual} />
+
+        <BarChart title="🍻 Ganancia por bar" unidad="money" datos={gananciaPorBar} />
 
       {baresCortesia.length > 0 && (
         <>
-          <h2>Cortesías / actividades especiales</h2>
+          <h2>🎁 Cortesías / actividades especiales</h2>
           <table>
             <thead>
               <tr>
@@ -193,12 +196,13 @@ export default function Reporte() {
         </>
       )}
 
-      <BarChart title="Ingreso por producto (top 8)" unidad="money" datos={ingresoPorProducto} />
+        <BarChart title="🗂️ Ingreso por producto (top 8)" unidad="money" datos={ingresoPorProducto} />
 
-      <p className="reporte-nota">
-        El detalle completo, producto por producto y movimiento por movimiento, está en el
-        Excel descargable — este PDF es un resumen visual para revisar rápido.
-      </p>
+        <p className="reporte-nota">
+          El detalle completo, producto por producto y movimiento por movimiento, está en el
+          Excel descargable — este PDF es un resumen visual para revisar rápido.
+        </p>
+      </div>
     </div>
   )
 }
