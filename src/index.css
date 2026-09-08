@@ -185,9 +185,10 @@ h2 {
 }
 
 .type-toggle button.active {
-  background: var(--accent);
+  background: rgba(108, 92, 231, 0.16);
   border-color: var(--accent);
-  color: white;
+  color: var(--accent-strong);
+  font-weight: 600;
 }
 
 .btn-primary {
