@@ -537,6 +537,12 @@ th {
   background: #ffffff;
   color: #1a1a1a;
   min-height: 100vh;
+  /* #root fuerza height:100% (una pantalla) para que <main> pueda hacer scroll
+     interno en el resto de la app; el Reporte no usa esa estructura, así que
+     sin flex-shrink:0 el flex layout lo encoge y el contenido de más se pinta
+     fuera del fondo blanco (se ve "cortado" con la parte de abajo oscura). */
+  flex-shrink: 0;
+  width: 100%;
 }
 
 .reporte h1 {
