@@ -5,8 +5,8 @@
   --border: #2e3342;
   --text: #f2f3f7;
   --text-muted: #9aa0b4;
-  --accent: #6c5ce7;
-  --accent-strong: #8072ff;
+  --accent: #c9922b;
+  --accent-strong: #e0ab4a;
   --success: #2ecc71;
   --danger: #ff5c5c;
   --radius: 14px;
@@ -165,7 +165,8 @@ h2 {
 .filter-chips button.active {
   background: var(--accent);
   border-color: var(--accent);
-  color: white;
+  color: var(--bg);
+  font-weight: 600;
 }
 
 .type-toggle {
@@ -185,7 +186,7 @@ h2 {
 }
 
 .type-toggle button.active {
-  background: rgba(108, 92, 231, 0.16);
+  background: rgba(201, 146, 43, 0.18);
   border-color: var(--accent);
   color: var(--accent-strong);
   font-weight: 600;
@@ -197,9 +198,9 @@ h2 {
   border-radius: 12px;
   border: none;
   background: var(--accent);
-  color: white;
+  color: var(--bg);
   font-size: 1.05rem;
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .btn-primary:active {
