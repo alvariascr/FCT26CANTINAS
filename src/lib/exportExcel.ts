@@ -4,12 +4,12 @@ import type { ResumenBarRow, ResumenProductoRow, StockBodegaRow } from './types'
 const MONEY_FMT = '#,##0'
 
 const COLOR = {
-  headerFill: 'FFA8710F',
+  headerFill: 'FF3A6BC9',
   headerFont: 'FFFFFFFF',
-  titleFill: 'FF1A1508',
-  titleFont: 'FFE0AB4A',
-  zebra: 'FFF7F0E3',
-  border: 'FFE0D7C6',
+  titleFill: 'FF16233D',
+  titleFont: 'FF9DBBEE',
+  zebra: 'FFEDF2FB',
+  border: 'FFD7E3F5',
   negBg: 'FFFFC7CE',
   negFont: 'FF9C0006',
 } as const

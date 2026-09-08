@@ -5,8 +5,8 @@
   --border: #2e3342;
   --text: #f2f3f7;
   --text-muted: #9aa0b4;
-  --accent: #c9922b;
-  --accent-strong: #e0ab4a;
+  --accent: #3a6bc9;
+  --accent-strong: #5a8bde;
   --success: #2ecc71;
   --danger: #ff5c5c;
   --radius: 14px;
@@ -165,7 +165,7 @@ h2 {
 .filter-chips button.active {
   background: var(--accent);
   border-color: var(--accent);
-  color: var(--bg);
+  color: white;
   font-weight: 600;
 }
 
@@ -186,7 +186,7 @@ h2 {
 }
 
 .type-toggle button.active {
-  background: rgba(201, 146, 43, 0.18);
+  background: rgba(58, 107, 201, 0.18);
   border-color: var(--accent);
   color: var(--accent-strong);
   font-weight: 600;
@@ -198,7 +198,7 @@ h2 {
   border-radius: 12px;
   border: none;
   background: var(--accent);
-  color: var(--bg);
+  color: white;
   font-size: 1.05rem;
   font-weight: 700;
 }
@@ -549,7 +549,7 @@ th {
 }
 
 .reporte-band {
-  background: linear-gradient(135deg, #6b4a0a, #c9922b);
+  background: linear-gradient(135deg, #1f3d75, #3a6bc9);
   color: #ffffff;
   padding: 22px 20px;
   margin-top: 16px;
@@ -563,7 +563,7 @@ th {
 
 .reporte-subtitulo {
   margin: 0 0 4px;
-  color: #fbe8c6;
+  color: #cfe0f9;
   font-size: 1rem;
 }
 
@@ -580,8 +580,8 @@ th {
 .reporte h2 {
   font-size: 1rem;
   margin: 26px 0 10px;
-  color: #1a1508;
-  border-bottom: 2px solid #eee2cc;
+  color: #16233d;
+  border-bottom: 2px solid #d7e3f5;
   padding-bottom: 6px;
 }
 
@@ -590,26 +590,26 @@ th {
   border-collapse: collapse;
   font-size: 0.78rem;
   margin-bottom: 4px;
-  border: 1px solid #e0d7c6;
+  border: 1px solid #d7e3f5;
 }
 
 .reporte th,
 .reporte td {
   text-align: left;
   padding: 7px 8px;
-  border-bottom: 1px solid #e0d7c6;
+  border-bottom: 1px solid #d7e3f5;
   color: #1a1a1a;
 }
 
 .reporte th {
-  background: #a8710f;
+  background: #3a6bc9;
   color: #ffffff;
   font-weight: 700;
   border-bottom: none;
 }
 
 .reporte tbody tr:nth-child(even) {
-  background: #f7f0e3;
+  background: #eef3fb;
 }
 
 .reporte-nota {
@@ -637,10 +637,10 @@ th {
 }
 
 .reporte-tile {
-  border: 1px solid #eee2cc;
-  border-left: 4px solid #a8710f;
+  border: 1px solid #d7e3f5;
+  border-left: 4px solid #3a6bc9;
   border-radius: 6px;
-  background: #fbf7ee;
+  background: #f4f8fd;
   padding: 10px 12px;
   display: flex;
   flex-direction: column;
@@ -649,14 +649,14 @@ th {
 
 .reporte-tile span {
   font-size: 0.68rem;
-  color: #8a7a5c;
+  color: #5f7599;
   text-transform: uppercase;
   letter-spacing: 0.03em;
 }
 
 .reporte-tile strong {
   font-size: 1.05rem;
-  color: #1a1508;
+  color: #16233d;
 }
 
 @media (max-width: 480px) {
