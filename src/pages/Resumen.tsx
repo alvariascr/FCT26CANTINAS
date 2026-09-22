@@ -269,18 +269,26 @@ export default function Resumen() {
                     <th>Devuelto</th>
                     <th>Vendido</th>
                     <th>{barDetalle.esCortesia ? 'Valor equiv.' : 'Ingreso'}</th>
+                    <th>Costo</th>
+                    <th>Ganancia</th>
                   </tr>
                 </thead>
                 <tbody>
                   {detalleFiltrado.map((m) => {
                     const prod = productos.find((p) => p.id === m.producto_id)
+                    const ingresoOValor = m.es_cortesia ? m.valor_equivalente : m.ingreso
+                    const ganancia = ingresoOValor - m.costo
                     return (
                       <tr key={m.producto_id}>
                         <td>{m.producto_nombre}</td>
                         <td>{formatoEmpaque(m.total_trasladado, prod)}</td>
                         <td>{formatoEmpaque(m.total_devuelto, prod)}</td>
                         <td>{formatoEmpaque(m.vendido, prod)}</td>
-                        <td>₡{moneda.format(m.es_cortesia ? m.valor_equivalente : m.ingreso)}</td>
+                        <td>₡{moneda.format(ingresoOValor)}</td>
+                        <td>₡{moneda.format(m.costo)}</td>
+                        <td style={{ color: ganancia >= 0 ? 'var(--success)' : 'var(--danger)' }}>
+                          ₡{moneda.format(ganancia)}
+                        </td>
                       </tr>
                     )
                   })}
@@ -291,6 +299,18 @@ export default function Resumen() {
                       {moneda.format(
                         detalleFiltrado.reduce(
                           (acc, m) => acc + (m.es_cortesia ? m.valor_equivalente : m.ingreso),
+                          0
+                        )
+                      )}
+                    </td>
+                    <td>
+                      ₡{moneda.format(detalleFiltrado.reduce((acc, m) => acc + m.costo, 0))}
+                    </td>
+                    <td>
+                      ₡
+                      {moneda.format(
+                        detalleFiltrado.reduce(
+                          (acc, m) => acc + (m.es_cortesia ? m.valor_equivalente : m.ingreso) - m.costo,
                           0
                         )
                       )}
