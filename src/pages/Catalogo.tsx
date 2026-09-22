@@ -32,13 +32,11 @@ export default function Catalogo() {
 
   const [nuevoNombre, setNuevoNombre] = useState('')
   const [nuevoTipo, setNuevoTipo] = useState<TipoProducto>('alcoholica')
-  const [nuevoServido, setNuevoServido] = useState<'completa' | 'shot'>('completa')
   const [nuevoMlBotella, setNuevoMlBotella] = useState('')
   const [nuevoMlPorcion, setNuevoMlPorcion] = useState('')
   const [nuevoCosto, setNuevoCosto] = useState('')
   const [nuevoPrecio, setNuevoPrecio] = useState('')
   const [nuevoCategoria, setNuevoCategoria] = useState<CategoriaEmpaque>('cerveza')
-  const [nuevoPrecioPorCaja, setNuevoPrecioPorCaja] = useState(false)
 
   const [nuevoBar, setNuevoBar] = useState('')
   const [nuevoBarCortesia, setNuevoBarCortesia] = useState(false)
@@ -59,13 +57,16 @@ export default function Catalogo() {
   async function agregarProducto(e: FormEvent) {
     e.preventDefault()
     if (!nuevoNombre.trim()) return
+    const esLicor = nuevoCategoria === 'licor'
     const mlBotella = nuevoMlBotella ? Number(nuevoMlBotella) : null
-    const mlPorcion =
-      nuevoServido === 'completa' ? mlBotella : nuevoMlPorcion ? Number(nuevoMlPorcion) : null
+    const mlPorcion = esLicor ? (nuevoMlPorcion ? Number(nuevoMlPorcion) : null) : mlBotella
     const { unidades: unidadesPorCaja, nombre: empaqueNombre } = DATOS_CATEGORIA[nuevoCategoria]
-    const dividir = nuevoCategoria !== 'licor' && nuevoPrecioPorCaja
-    const costoUnidad = dividir ? (Number(nuevoCosto) || 0) / unidadesPorCaja : Number(nuevoCosto) || 0
-    const precioUnidad = dividir ? (Number(nuevoPrecio) || 0) / unidadesPorCaja : Number(nuevoPrecio) || 0
+    // Cerveza/refresco: el costo/precio siempre se escriben de la caja/paquete completo.
+    // Licor: el costo es por botella completa y el precio ya es por shot, no se divide.
+    const costoUnidad = esLicor ? Number(nuevoCosto) || 0 : (Number(nuevoCosto) || 0) / unidadesPorCaja
+    const precioUnidad = esLicor
+      ? Number(nuevoPrecio) || 0
+      : (Number(nuevoPrecio) || 0) / unidadesPorCaja
     const { error } = await supabase.from('productos').insert({
       nombre: nuevoNombre.trim(),
       tipo: nuevoTipo,
@@ -81,13 +82,11 @@ export default function Catalogo() {
       return
     }
     setNuevoNombre('')
-    setNuevoServido('completa')
     setNuevoMlBotella('')
     setNuevoMlPorcion('')
     setNuevoCosto('')
     setNuevoPrecio('')
     setNuevoCategoria('cerveza')
-    setNuevoPrecioPorCaja(false)
     setShowNuevoProducto(false)
     toast.show('Producto agregado.')
     cargar()
@@ -448,28 +447,35 @@ export default function Catalogo() {
                   </button>
                 </div>
                 <div className="field">
-                  <label>¿Cómo se sirve?</label>
+                  <label>¿Cómo se cuenta este producto?</label>
                   <div className="type-toggle">
                     <button
                       type="button"
-                      className={nuevoServido === 'completa' ? 'active' : ''}
-                      onClick={() => setNuevoServido('completa')}
+                      className={nuevoCategoria === 'cerveza' ? 'active' : ''}
+                      onClick={() => setNuevoCategoria('cerveza')}
                     >
-                      🍾 Completa (cerveza, soda)
+                      🍺 Cerveza (caja 24)
                     </button>
                     <button
                       type="button"
-                      className={nuevoServido === 'shot' ? 'active' : ''}
-                      onClick={() => setNuevoServido('shot')}
+                      className={nuevoCategoria === 'refresco' ? 'active' : ''}
+                      onClick={() => setNuevoCategoria('refresco')}
                     >
-                      🥃 Por shot/copa
+                      🥤 Refresco (paq 12)
+                    </button>
+                    <button
+                      type="button"
+                      className={nuevoCategoria === 'licor' ? 'active' : ''}
+                      onClick={() => setNuevoCategoria('licor')}
+                    >
+                      🥃 Licor (botella)
                     </button>
                   </div>
                 </div>
 
-                {nuevoServido === 'completa' ? (
+                {nuevoCategoria !== 'licor' ? (
                   <div className="field">
-                    <label htmlFor="p-ml-botella">ml por botella/lata/unidad</label>
+                    <label htmlFor="p-ml-botella">ml por botella/lata</label>
                     <input
                       id="p-ml-botella"
                       type="number"
@@ -501,60 +507,10 @@ export default function Catalogo() {
                 )}
 
                 <div className="field">
-                  <label>¿Cómo se cuenta este producto?</label>
-                  <div className="type-toggle">
-                    <button
-                      type="button"
-                      className={nuevoCategoria === 'cerveza' ? 'active' : ''}
-                      onClick={() => setNuevoCategoria('cerveza')}
-                    >
-                      🍺 Cerveza (caja 24)
-                    </button>
-                    <button
-                      type="button"
-                      className={nuevoCategoria === 'refresco' ? 'active' : ''}
-                      onClick={() => setNuevoCategoria('refresco')}
-                    >
-                      🥤 Refresco (paq 12)
-                    </button>
-                    <button
-                      type="button"
-                      className={nuevoCategoria === 'licor' ? 'active' : ''}
-                      onClick={() => setNuevoCategoria('licor')}
-                    >
-                      🥃 Licor (botella)
-                    </button>
-                  </div>
-                </div>
-
-                {nuevoCategoria !== 'licor' && (
-                  <label
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 10,
-                      marginBottom: 20,
-                      fontSize: '0.85rem',
-                    }}
-                  >
-                    <input
-                      type="checkbox"
-                      checked={nuevoPrecioPorCaja}
-                      onChange={(e) => setNuevoPrecioPorCaja(e.target.checked)}
-                      style={{ width: 18, height: 18 }}
-                    />
-                    Voy a escribir el costo/precio de {DATOS_CATEGORIA[nuevoCategoria].nombre!.toLowerCase()}{' '}
-                    completa, no por unidad
-                  </label>
-                )}
-
-                <div className="field">
                   <label htmlFor="p-costo">
-                    {nuevoPrecioPorCaja && nuevoCategoria !== 'licor'
+                    {nuevoCategoria !== 'licor'
                       ? `Costo de compra de ${DATOS_CATEGORIA[nuevoCategoria].nombre!.toLowerCase()} completa (₡)`
-                      : nuevoServido === 'shot'
-                        ? 'Costo de compra por botella completa (₡)'
-                        : 'Costo de compra por unidad (₡)'}
+                      : 'Costo de compra por botella completa (₡)'}
                   </label>
                   <input
                     id="p-costo"
@@ -562,12 +518,12 @@ export default function Catalogo() {
                     value={nuevoCosto}
                     onChange={(e) => setNuevoCosto(e.target.value)}
                   />
-                  {nuevoServido === 'shot' && !(nuevoPrecioPorCaja && nuevoCategoria !== 'licor') && (
+                  {nuevoCategoria === 'licor' && (
                     <div style={{ marginTop: 4, fontSize: '0.78rem', color: 'var(--text-muted)' }}>
                       No es el costo del shot — es lo que cuesta la botella entera.
                     </div>
                   )}
-                  {nuevoPrecioPorCaja && nuevoCategoria !== 'licor' && (
+                  {nuevoCategoria !== 'licor' && (
                     <div style={{ marginTop: 4, fontSize: '0.78rem', color: 'var(--text-muted)' }}>
                       = ₡
                       {moneda.format(
@@ -579,9 +535,9 @@ export default function Catalogo() {
                 </div>
                 <div className="field">
                   <label htmlFor="p-precio">
-                    {nuevoPrecioPorCaja && nuevoCategoria !== 'licor'
+                    {nuevoCategoria !== 'licor'
                       ? `Precio de venta de ${DATOS_CATEGORIA[nuevoCategoria].nombre!.toLowerCase()} completa (₡)`
-                      : `Precio de venta ${nuevoServido === 'shot' ? 'por shot/copa' : 'por unidad'} (₡)`}
+                      : 'Precio de venta por shot/copa (₡)'}
                   </label>
                   <input
                     id="p-precio"
@@ -589,7 +545,7 @@ export default function Catalogo() {
                     value={nuevoPrecio}
                     onChange={(e) => setNuevoPrecio(e.target.value)}
                   />
-                  {nuevoPrecioPorCaja && nuevoCategoria !== 'licor' && (
+                  {nuevoCategoria !== 'licor' && (
                     <div style={{ marginTop: 4, fontSize: '0.78rem', color: 'var(--text-muted)' }}>
                       = ₡
                       {moneda.format(
