@@ -4,7 +4,23 @@ import { supabase } from '../lib/supabaseClient'
 import Collapsible from '../components/Collapsible'
 import Modal from '../components/Modal'
 import StockBadge from '../components/StockBadge'
-import type { MovimientoBarRow, ResumenBarRow, ResumenProductoRow, StockBodegaRow } from '../lib/types'
+import type {
+  MovimientoBarRow,
+  Producto,
+  ResumenBarRow,
+  ResumenProductoRow,
+  StockBodegaRow,
+} from '../lib/types'
+
+function formatoEmpaque(stock: number, producto?: Producto) {
+  const porCaja = producto?.unidades_por_caja ?? 1
+  if (porCaja <= 1) return `${stock} unidades`
+  const nombre = (producto?.empaque_nombre || 'Caja').toLowerCase()
+  const cajas = Math.floor(stock / porCaja)
+  const sobrante = stock % porCaja
+  const textoCajas = `${cajas} ${nombre}${cajas === 1 ? '' : 's'}`
+  return sobrante > 0 ? `${textoCajas} + ${sobrante} u.` : textoCajas
+}
 
 const moneda = new Intl.NumberFormat('es-CR', { maximumFractionDigits: 0 })
 
@@ -13,6 +29,7 @@ export default function Resumen() {
   const [resumenBar, setResumenBar] = useState<ResumenBarRow[]>([])
   const [movimientosBar, setMovimientosBar] = useState<MovimientoBarRow[]>([])
   const [resumen, setResumen] = useState<ResumenProductoRow[]>([])
+  const [productos, setProductos] = useState<Producto[]>([])
   const [loading, setLoading] = useState(true)
   const [barDetalle, setBarDetalle] = useState<{
     id: string
@@ -22,16 +39,19 @@ export default function Resumen() {
 
   async function cargar() {
     setLoading(true)
-    const [{ data: bodega }, { data: bares }, { data: movs }, { data: res }] = await Promise.all([
-      supabase.from('v_stock_bodega').select('*').order('nombre'),
-      supabase.from('v_resumen_bar').select('*'),
-      supabase.from('v_movimientos_bar').select('*').order('producto_nombre'),
-      supabase.from('v_resumen_producto').select('*').order('nombre'),
-    ])
+    const [{ data: bodega }, { data: bares }, { data: movs }, { data: res }, { data: prods }] =
+      await Promise.all([
+        supabase.from('v_stock_bodega').select('*').order('nombre'),
+        supabase.from('v_resumen_bar').select('*'),
+        supabase.from('v_movimientos_bar').select('*').order('producto_nombre'),
+        supabase.from('v_resumen_producto').select('*').order('nombre'),
+        supabase.from('productos').select('*'),
+      ])
     setStockBodega(bodega ?? [])
     setResumenBar(bares ?? [])
     setMovimientosBar(movs ?? [])
     setResumen(res ?? [])
+    setProductos(prods ?? [])
     setLoading(false)
   }
 
@@ -115,7 +135,10 @@ export default function Resumen() {
                   <tr key={s.producto_id}>
                     <td>{s.nombre}</td>
                     <td>
-                      <StockBadge value={s.stock_bodega} />
+                      {formatoEmpaque(
+                        s.stock_bodega,
+                        productos.find((p) => p.id === s.producto_id)
+                      )}
                     </td>
                   </tr>
                 ))}
