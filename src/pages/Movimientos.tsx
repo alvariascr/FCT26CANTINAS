@@ -349,12 +349,12 @@ export default function Movimientos() {
           </select>
           {modo === 'traslado' && (
             <div style={{ marginTop: 6, fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-              Stock en bodega: <StockBadge value={stockBodegaDisponible} />
+              Stock en bodega: <StockBadge value={stockBodegaDisponible} /> unidades
             </div>
           )}
           {modo === 'devolucion' && (
             <div style={{ marginTop: 6, fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-              Stock actual en ese bar: <StockBadge value={stockBarActual} />
+              Stock actual en ese bar: <StockBadge value={stockBarActual} /> unidades
             </div>
           )}
           {excedeStock && (
