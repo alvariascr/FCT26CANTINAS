@@ -9,6 +9,8 @@ export interface Producto {
   ml_porcion: number | null
   costo_compra: number
   precio_venta_porcion: number
+  unidades_por_caja: number
+  empaque_nombre: string | null
   activo: boolean
   creado_en: string
 }

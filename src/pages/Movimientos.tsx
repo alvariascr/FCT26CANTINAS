@@ -65,6 +65,7 @@ export default function Movimientos() {
   const [barId, setBarId] = useState('')
   const [productoId, setProductoId] = useState('')
   const [cantidad, setCantidad] = useState(1)
+  const [unidadCarga, setUnidadCarga] = useState<'empaque' | 'unidad'>('empaque')
   const [saving, setSaving] = useState(false)
   const [historial, setHistorial] = useState<ItemHistorial[]>([])
   const [showHistorial, setShowHistorial] = useState(false)
@@ -214,6 +215,21 @@ export default function Movimientos() {
     }
   }, [productosFiltrados, productoId])
 
+  const productoSeleccionado = productos.find((p) => p.id === productoId)
+  const usaEmpaque = (productoSeleccionado?.unidades_por_caja ?? 1) > 1
+  const nombreEmpaque = productoSeleccionado?.empaque_nombre || 'Caja'
+
+  useEffect(() => {
+    if (!productoId) return
+    const p = productos.find((pr) => pr.id === productoId)
+    setUnidadCarga((p?.unidades_por_caja ?? 1) > 1 ? 'empaque' : 'unidad')
+  }, [productoId, productos])
+
+  const cantidadReal =
+    usaEmpaque && unidadCarga === 'empaque'
+      ? cantidad * (productoSeleccionado?.unidades_por_caja ?? 1)
+      : cantidad
+
   const stockBodegaDisponible =
     stockBodega.find((s) => s.producto_id === productoId)?.stock_bodega ?? 0
 
@@ -221,18 +237,18 @@ export default function Movimientos() {
     stockBares.find((s) => s.producto_id === productoId && s.bar_id === barId)?.stock_bar ?? 0
 
   const excedeStock =
-    (modo === 'traslado' && cantidad > stockBodegaDisponible) ||
-    (modo === 'devolucion' && cantidad > stockBarActual)
+    (modo === 'traslado' && cantidadReal > stockBodegaDisponible) ||
+    (modo === 'devolucion' && cantidadReal > stockBarActual)
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!productoId || cantidad <= 0) return
     if (modo !== 'entrada' && !barId) return
-    if (modo === 'traslado' && cantidad > stockBodegaDisponible) {
+    if (modo === 'traslado' && cantidadReal > stockBodegaDisponible) {
       toast.show(`No hay suficiente stock en bodega (disponible: ${stockBodegaDisponible}).`, 'error')
       return
     }
-    if (modo === 'devolucion' && cantidad > stockBarActual) {
+    if (modo === 'devolucion' && cantidadReal > stockBarActual) {
       toast.show(`No puede devolver más de lo que hay en ese bar (disponible: ${stockBarActual}).`, 'error')
       return
     }
@@ -242,14 +258,14 @@ export default function Movimientos() {
       modo === 'entrada'
         ? await supabase
             .from('entradas_bodega')
-            .insert({ producto_id: productoId, cantidad, usuario_id: session?.user.id })
+            .insert({ producto_id: productoId, cantidad: cantidadReal, usuario_id: session?.user.id })
         : modo === 'traslado'
           ? await supabase
               .from('traslados')
-              .insert({ bar_id: barId, producto_id: productoId, cantidad, usuario_id: session?.user.id })
+              .insert({ bar_id: barId, producto_id: productoId, cantidad: cantidadReal, usuario_id: session?.user.id })
           : await supabase
               .from('devoluciones')
-              .insert({ bar_id: barId, producto_id: productoId, cantidad, usuario_id: session?.user.id })
+              .insert({ bar_id: barId, producto_id: productoId, cantidad: cantidadReal, usuario_id: session?.user.id })
 
     setSaving(false)
     if (error) {
@@ -334,11 +350,25 @@ export default function Movimientos() {
           {modo === 'traslado' && (
             <div style={{ marginTop: 6, fontSize: '0.85rem', color: 'var(--text-muted)' }}>
               Stock en bodega: <StockBadge value={stockBodegaDisponible} />
+              {usaEmpaque && (
+                <span>
+                  {' '}
+                  (≈{Math.floor(stockBodegaDisponible / (productoSeleccionado?.unidades_por_caja ?? 1))}{' '}
+                  {nombreEmpaque.toLowerCase()}s)
+                </span>
+              )}
             </div>
           )}
           {modo === 'devolucion' && (
             <div style={{ marginTop: 6, fontSize: '0.85rem', color: 'var(--text-muted)' }}>
               Stock actual en ese bar: <StockBadge value={stockBarActual} />
+              {usaEmpaque && (
+                <span>
+                  {' '}
+                  (≈{Math.floor(stockBarActual / (productoSeleccionado?.unidades_por_caja ?? 1))}{' '}
+                  {nombreEmpaque.toLowerCase()}s)
+                </span>
+              )}
             </div>
           )}
           {excedeStock && (
@@ -348,13 +378,37 @@ export default function Movimientos() {
           )}
         </div>
 
+        {usaEmpaque && (
+          <div className="type-toggle">
+            <button
+              type="button"
+              className={unidadCarga === 'empaque' ? 'active' : ''}
+              onClick={() => setUnidadCarga('empaque')}
+            >
+              📦 {nombreEmpaque}s
+            </button>
+            <button
+              type="button"
+              className={unidadCarga === 'unidad' ? 'active' : ''}
+              onClick={() => setUnidadCarga('unidad')}
+            >
+              🍾 Unidades sueltas
+            </button>
+          </div>
+        )}
+
         <div className="field">
           <label htmlFor="cantidad">
-            {modo === 'entrada'
+            {(modo === 'entrada'
               ? 'Cantidad recibida'
               : modo === 'traslado'
                 ? 'Cantidad a trasladar'
-                : 'Cantidad que sobró (devuelta)'}
+                : 'Cantidad que sobró (devuelta)') +
+              (usaEmpaque
+                ? unidadCarga === 'empaque'
+                  ? ` (en ${nombreEmpaque.toLowerCase()}s)`
+                  : ' (en unidades)'
+                : '')}
           </label>
           <div className="qty-stepper">
             <button type="button" onClick={() => setCantidad((c) => Math.max(1, c - 1))}>
@@ -376,6 +430,12 @@ export default function Movimientos() {
               +
             </button>
           </div>
+          {usaEmpaque && unidadCarga === 'empaque' && (
+            <div style={{ marginTop: 6, fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+              = {cantidadReal} unidades ({cantidad} {nombreEmpaque.toLowerCase()}
+              {cantidad === 1 ? '' : 's'} × {productoSeleccionado?.unidades_por_caja})
+            </div>
+          )}
         </div>
 
         <button

@@ -15,6 +15,13 @@ create table if not exists productos (
   ml_porcion numeric,
   costo_compra numeric not null default 0,
   precio_venta_porcion numeric not null default 0,
+  -- Para productos que se cuentan por caja/paquete en vez de unidad suelta (ej. cerveza:
+  -- caja de 24, refrescos: paquete de 12) porque contar botella por botella durante el
+  -- evento no es práctico. 1 = no aplica, se cuenta siempre por unidad (ej. licores).
+  unidades_por_caja numeric not null default 1,
+  -- Cómo se llama el empaque para ese producto ("Caja", "Paquete", etc.), para que
+  -- Movimientos muestre el nombre correcto en vez de asumir siempre "Caja".
+  empaque_nombre text,
   activo boolean not null default true,
   creado_en timestamptz not null default now()
 );
@@ -259,27 +266,27 @@ insert into bares (nombre) values
   ('Bar redondel abajo')
 on conflict (nombre) do nothing;
 
-insert into productos (nombre, tipo, ml_botella, ml_porcion, costo_compra, precio_venta_porcion) values
-  ('Imperial 350ml', 'alcoholica', 350, 350, 19000, 36000),
-  ('Light 350ml', 'alcoholica', 350, 350, 19000, 36000),
-  ('Pilsen 350 ml', 'alcoholica', 350, 350, 19000, 36000),
-  ('Silver 350ml', 'alcoholica', 350, 350, 19000, 36000),
-  ('Buchannans litro', 'alcoholica', 1000, 30, 0, 3000),
-  ('Johnny negro litro', 'alcoholica', 1000, 30, 0, 3000),
-  ('Old Parr litro', 'alcoholica', 1000, 30, 0, 3000),
-  ('Royal litro', 'alcoholica', 1000, 30, 0, 1000),
-  ('J&B litro', 'alcoholica', 1000, 30, 0, 2000),
-  ('Flor de caña litro', 'alcoholica', 1000, 30, 0, 2000),
-  ('Centenario litro', 'alcoholica', 1000, 30, 0, 2000),
-  ('Campari litro', 'alcoholica', 1000, 30, 0, 2000),
-  ('Cacique litro', 'alcoholica', 1000, 30, 0, 1000),
-  ('Jagger litro', 'alcoholica', 1000, 30, 0, 2000),
-  ('Coca cola 355ml', 'sin_alcohol', 500, 500, 0, 0),
-  ('Gin 355ml', 'sin_alcohol', 500, 500, 0, 0),
-  ('Fresca 355ml', 'sin_alcohol', 350, 350, 0, 0),
-  ('Tropical Té Blanco 500ml', 'sin_alcohol', 350, 350, 0, 0),
-  ('Tropical Té frío melo 500ml', 'sin_alcohol', 350, 350, 0, 0),
-  ('Tropical Té frío melo 350ml', 'sin_alcohol', 300, 300, 0, 0),
-  ('Tropical Té Blanco 350ml', 'sin_alcohol', 300, 300, 0, 0),
-  ('Agua 600ml', 'sin_alcohol', 600, 600, 0, 0)
+insert into productos (nombre, tipo, ml_botella, ml_porcion, costo_compra, precio_venta_porcion, unidades_por_caja, empaque_nombre) values
+  -- Cerveza y bebidas premezcladas: se compran y se cuentan por caja de 24 (contar
+  -- botella por botella durante el evento no es práctico), aunque se venden por unidad.
+  -- Imperial: caja ₡19.000 costo / ₡36.000 venta => por botella ₡792 costo / ₡1.500 venta
+  -- (mismo precio aplicado a Light/Pilsen/Silver por ahora, ajustar en Catálogo si difiere).
+  ('Imperial regular', 'alcoholica', 350, 350, 792, 1500, 24, 'Caja'),
+  ('Imperial light', 'alcoholica', 350, 350, 792, 1500, 24, 'Caja'),
+  ('Pilsen', 'alcoholica', 350, 350, 792, 1500, 24, 'Caja'),
+  ('Silver', 'alcoholica', 350, 350, 792, 1500, 24, 'Caja'),
+  -- Pedido "Fiestas Tronadora" (primer pedido, 2026-09-21): sin costo/precio todavía.
+  ('Adam y Eva frutos rojos', 'alcoholica', null, null, 0, 0, 24, 'Caja'),
+  ('Adam y Eva Maracuyá', 'alcoholica', null, null, 0, 0, 24, 'Caja'),
+  ('Smirnoff negra', 'alcoholica', null, null, 0, 0, 24, 'Caja'),
+  ('Smirnoff roja', 'alcoholica', null, null, 0, 0, 24, 'Caja'),
+  ('Smirnoff verde', 'alcoholica', null, null, 0, 0, 24, 'Caja'),
+  ('Guarana', 'alcoholica', null, null, 0, 0, 24, 'Caja'),
+  ('Cuba', 'alcoholica', null, null, 0, 0, 24, 'Caja'),
+  -- Refrescos: paquetes de 12. Catálogo reducido a lo que vino en el primer pedido;
+  -- se agregan más marcas/licores de botella cuando lleguen en un pedido futuro.
+  ('Coca cola 355ml', 'sin_alcohol', 500, 500, 0, 0, 12, 'Paquete'),
+  ('Gin 355ml', 'sin_alcohol', 500, 500, 0, 0, 12, 'Paquete'),
+  ('Tropical Té Blanco 500ml', 'sin_alcohol', 350, 350, 0, 0, 12, 'Paquete'),
+  ('Tropical Té melocotón 500ml', 'sin_alcohol', 350, 350, 0, 0, 12, 'Paquete')
 on conflict do nothing;
