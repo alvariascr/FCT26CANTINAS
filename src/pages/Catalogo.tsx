@@ -26,8 +26,20 @@ export default function Catalogo() {
   const [nuevoCosto, setNuevoCosto] = useState('')
   const [nuevoPrecio, setNuevoPrecio] = useState('')
   const [nuevoUsaEmpaque, setNuevoUsaEmpaque] = useState(false)
+  const [nuevoEmpaquePreset, setNuevoEmpaquePreset] = useState<'caja' | 'paquete' | 'otro'>('caja')
   const [nuevoEmpaqueNombre, setNuevoEmpaqueNombre] = useState('Caja')
   const [nuevoUnidadesPorCaja, setNuevoUnidadesPorCaja] = useState('24')
+
+  function elegirPreset(preset: 'caja' | 'paquete' | 'otro') {
+    setNuevoEmpaquePreset(preset)
+    if (preset === 'caja') {
+      setNuevoEmpaqueNombre('Caja')
+      setNuevoUnidadesPorCaja('24')
+    } else if (preset === 'paquete') {
+      setNuevoEmpaqueNombre('Paquete')
+      setNuevoUnidadesPorCaja('12')
+    }
+  }
 
   const [nuevoBar, setNuevoBar] = useState('')
   const [nuevoBarCortesia, setNuevoBarCortesia] = useState(false)
@@ -72,6 +84,7 @@ export default function Catalogo() {
     setNuevoCosto('')
     setNuevoPrecio('')
     setNuevoUsaEmpaque(false)
+    setNuevoEmpaquePreset('caja')
     setNuevoEmpaqueNombre('Caja')
     setNuevoUnidadesPorCaja('24')
     setShowNuevoProducto(false)
@@ -353,31 +366,53 @@ export default function Catalogo() {
                               }
                               style={{ width: 18, height: 18 }}
                             />
-                            Se cuenta por caja/paquete (no por unidad suelta)
+                            ¿Este producto llega en caja o paquete?
                           </label>
                           {usaEmpaque && (
-                            <div style={{ display: 'flex', gap: 10 }}>
-                              <div className="field" style={{ flex: 1 }}>
-                                <label>Nombre del empaque</label>
-                                <input
-                                  value={p.empaque_nombre ?? ''}
-                                  placeholder="Caja, Paquete..."
-                                  onChange={(e) =>
-                                    editarLocalTexto(p.id, 'empaque_nombre', e.target.value)
-                                  }
-                                />
+                            <>
+                              <div className="type-toggle" style={{ marginBottom: 10 }}>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    editarLocalTexto(p.id, 'empaque_nombre', 'Caja')
+                                    editarLocal(p.id, 'unidades_por_caja', '24')
+                                  }}
+                                >
+                                  📦 Caja (24)
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    editarLocalTexto(p.id, 'empaque_nombre', 'Paquete')
+                                    editarLocal(p.id, 'unidades_por_caja', '12')
+                                  }}
+                                >
+                                  📦 Paquete (12)
+                                </button>
                               </div>
-                              <div className="field" style={{ flex: 1 }}>
-                                <label>Unidades por empaque</label>
-                                <input
-                                  type="number"
-                                  value={p.unidades_por_caja}
-                                  onChange={(e) =>
-                                    editarLocal(p.id, 'unidades_por_caja', e.target.value)
-                                  }
-                                />
+                              <div style={{ display: 'flex', gap: 10 }}>
+                                <div className="field" style={{ flex: 1 }}>
+                                  <label>Nombre del empaque</label>
+                                  <input
+                                    value={p.empaque_nombre ?? ''}
+                                    placeholder="Ej: Six pack, Fardo..."
+                                    onChange={(e) =>
+                                      editarLocalTexto(p.id, 'empaque_nombre', e.target.value)
+                                    }
+                                  />
+                                </div>
+                                <div className="field" style={{ flex: 1 }}>
+                                  <label>Unidades que trae</label>
+                                  <input
+                                    type="number"
+                                    value={p.unidades_por_caja}
+                                    onChange={(e) =>
+                                      editarLocal(p.id, 'unidades_por_caja', e.target.value)
+                                    }
+                                  />
+                                </div>
                               </div>
-                            </div>
+                            </>
                           )}
                           <div className="row-actions">
                             <button className="icon-btn" onClick={() => guardarProducto(p)}>
@@ -512,40 +547,79 @@ export default function Catalogo() {
                     display: 'flex',
                     alignItems: 'center',
                     gap: 10,
-                    marginBottom: nuevoUsaEmpaque ? 12 : 20,
+                    marginBottom: 4,
                     fontSize: '0.9rem',
                   }}
                 >
                   <input
                     type="checkbox"
                     checked={nuevoUsaEmpaque}
-                    onChange={(e) => setNuevoUsaEmpaque(e.target.checked)}
+                    onChange={(e) => {
+                      setNuevoUsaEmpaque(e.target.checked)
+                      if (e.target.checked) elegirPreset('caja')
+                    }}
                     style={{ width: 18, height: 18 }}
                   />
-                  Se cuenta por caja/paquete (no por unidad suelta)
+                  ¿Este producto llega en caja o paquete?
                 </label>
+                <div
+                  style={{
+                    fontSize: '0.78rem',
+                    color: 'var(--text-muted)',
+                    marginBottom: nuevoUsaEmpaque ? 12 : 20,
+                  }}
+                >
+                  Activalo para poder registrar movimientos de este producto en cajas/paquetes (ej.
+                  "2 cajas") en vez de escribir la cantidad de unidades a mano. Si se compra suelto,
+                  botella por botella, dejalo sin marcar.
+                </div>
                 {nuevoUsaEmpaque && (
                   <div className="field">
-                    <div style={{ display: 'flex', gap: 10 }}>
-                      <div className="field" style={{ flex: 1, marginBottom: 0 }}>
-                        <label htmlFor="p-empaque-nombre">Nombre del empaque</label>
-                        <input
-                          id="p-empaque-nombre"
-                          value={nuevoEmpaqueNombre}
-                          placeholder="Caja, Paquete..."
-                          onChange={(e) => setNuevoEmpaqueNombre(e.target.value)}
-                        />
-                      </div>
-                      <div className="field" style={{ flex: 1, marginBottom: 0 }}>
-                        <label htmlFor="p-unidades-caja">Unidades por empaque</label>
-                        <input
-                          id="p-unidades-caja"
-                          type="number"
-                          value={nuevoUnidadesPorCaja}
-                          onChange={(e) => setNuevoUnidadesPorCaja(e.target.value)}
-                        />
-                      </div>
+                    <div className="type-toggle" style={{ marginBottom: 10 }}>
+                      <button
+                        type="button"
+                        className={nuevoEmpaquePreset === 'caja' ? 'active' : ''}
+                        onClick={() => elegirPreset('caja')}
+                      >
+                        📦 Caja (24)
+                      </button>
+                      <button
+                        type="button"
+                        className={nuevoEmpaquePreset === 'paquete' ? 'active' : ''}
+                        onClick={() => elegirPreset('paquete')}
+                      >
+                        📦 Paquete (12)
+                      </button>
+                      <button
+                        type="button"
+                        className={nuevoEmpaquePreset === 'otro' ? 'active' : ''}
+                        onClick={() => elegirPreset('otro')}
+                      >
+                        ✏️ Otro
+                      </button>
                     </div>
+                    {nuevoEmpaquePreset === 'otro' && (
+                      <div style={{ display: 'flex', gap: 10 }}>
+                        <div className="field" style={{ flex: 1, marginBottom: 0 }}>
+                          <label htmlFor="p-empaque-nombre">Nombre del empaque</label>
+                          <input
+                            id="p-empaque-nombre"
+                            value={nuevoEmpaqueNombre}
+                            placeholder="Ej: Six pack, Fardo..."
+                            onChange={(e) => setNuevoEmpaqueNombre(e.target.value)}
+                          />
+                        </div>
+                        <div className="field" style={{ flex: 1, marginBottom: 0 }}>
+                          <label htmlFor="p-unidades-caja">Unidades que trae</label>
+                          <input
+                            id="p-unidades-caja"
+                            type="number"
+                            value={nuevoUnidadesPorCaja}
+                            onChange={(e) => setNuevoUnidadesPorCaja(e.target.value)}
+                          />
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
 
