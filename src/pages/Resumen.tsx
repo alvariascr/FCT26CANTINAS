@@ -3,7 +3,6 @@ import { Link } from 'react-router-dom'
 import { supabase } from '../lib/supabaseClient'
 import Collapsible from '../components/Collapsible'
 import Modal from '../components/Modal'
-import StockBadge from '../components/StockBadge'
 import type {
   MovimientoBarRow,
   Producto,
@@ -174,7 +173,7 @@ export default function Resumen() {
                     }
                   >
                     <td>{b.bar_nombre}</td>
-                    <td>{b.total_vendido}</td>
+                    <td>{b.total_vendido} u.</td>
                     <td>₡{moneda.format(b.ingreso_total)}</td>
                     <td>₡{moneda.format(b.costo_total)}</td>
                     <td>₡{moneda.format(b.ganancia_total)}</td>
@@ -213,7 +212,7 @@ export default function Resumen() {
                     }
                   >
                     <td>{b.bar_nombre}</td>
-                    <td>{b.total_vendido}</td>
+                    <td>{b.total_vendido} u.</td>
                     <td>₡{moneda.format(b.valor_equivalente_total)}</td>
                     <td>₡{moneda.format(b.costo_total)}</td>
                     <td className="chevron-cell">›</td>
@@ -245,7 +244,7 @@ export default function Resumen() {
               {resumen.map((r) => (
                 <tr key={r.producto_id}>
                   <td>{r.nombre}</td>
-                  <td>{r.total_vendido}</td>
+                  <td>{formatoEmpaque(r.total_vendido, productos.find((p) => p.id === r.producto_id))}</td>
                   <td>₡{moneda.format(r.ingreso_total)}</td>
                   <td>₡{moneda.format(r.costo_total)}</td>
                   <td>₡{moneda.format(r.ganancia_total)}</td>
@@ -273,17 +272,18 @@ export default function Resumen() {
                   </tr>
                 </thead>
                 <tbody>
-                  {detalleFiltrado.map((m) => (
-                    <tr key={m.producto_id}>
-                      <td>{m.producto_nombre}</td>
-                      <td>{m.total_trasladado}</td>
-                      <td>{m.total_devuelto}</td>
-                      <td>
-                        <StockBadge value={m.vendido} />
-                      </td>
-                      <td>₡{moneda.format(m.es_cortesia ? m.valor_equivalente : m.ingreso)}</td>
-                    </tr>
-                  ))}
+                  {detalleFiltrado.map((m) => {
+                    const prod = productos.find((p) => p.id === m.producto_id)
+                    return (
+                      <tr key={m.producto_id}>
+                        <td>{m.producto_nombre}</td>
+                        <td>{formatoEmpaque(m.total_trasladado, prod)}</td>
+                        <td>{formatoEmpaque(m.total_devuelto, prod)}</td>
+                        <td>{formatoEmpaque(m.vendido, prod)}</td>
+                        <td>₡{moneda.format(m.es_cortesia ? m.valor_equivalente : m.ingreso)}</td>
+                      </tr>
+                    )
+                  })}
                   <tr style={{ fontWeight: 700 }}>
                     <td colSpan={4}>Total</td>
                     <td>
