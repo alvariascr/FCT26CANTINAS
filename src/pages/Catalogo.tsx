@@ -20,10 +20,14 @@ export default function Catalogo() {
 
   const [nuevoNombre, setNuevoNombre] = useState('')
   const [nuevoTipo, setNuevoTipo] = useState<TipoProducto>('alcoholica')
+  const [nuevoServido, setNuevoServido] = useState<'completa' | 'shot'>('completa')
   const [nuevoMlBotella, setNuevoMlBotella] = useState('')
   const [nuevoMlPorcion, setNuevoMlPorcion] = useState('')
   const [nuevoCosto, setNuevoCosto] = useState('')
   const [nuevoPrecio, setNuevoPrecio] = useState('')
+  const [nuevoUsaEmpaque, setNuevoUsaEmpaque] = useState(false)
+  const [nuevoEmpaqueNombre, setNuevoEmpaqueNombre] = useState('Caja')
+  const [nuevoUnidadesPorCaja, setNuevoUnidadesPorCaja] = useState('24')
 
   const [nuevoBar, setNuevoBar] = useState('')
   const [nuevoBarCortesia, setNuevoBarCortesia] = useState(false)
@@ -44,23 +48,32 @@ export default function Catalogo() {
   async function agregarProducto(e: FormEvent) {
     e.preventDefault()
     if (!nuevoNombre.trim()) return
+    const mlBotella = nuevoMlBotella ? Number(nuevoMlBotella) : null
+    const mlPorcion =
+      nuevoServido === 'completa' ? mlBotella : nuevoMlPorcion ? Number(nuevoMlPorcion) : null
     const { error } = await supabase.from('productos').insert({
       nombre: nuevoNombre.trim(),
       tipo: nuevoTipo,
-      ml_botella: nuevoMlBotella ? Number(nuevoMlBotella) : null,
-      ml_porcion: nuevoMlPorcion ? Number(nuevoMlPorcion) : null,
+      ml_botella: mlBotella,
+      ml_porcion: mlPorcion,
       costo_compra: Number(nuevoCosto) || 0,
       precio_venta_porcion: Number(nuevoPrecio) || 0,
+      unidades_por_caja: nuevoUsaEmpaque ? Number(nuevoUnidadesPorCaja) || 1 : 1,
+      empaque_nombre: nuevoUsaEmpaque ? nuevoEmpaqueNombre.trim() || 'Caja' : null,
     })
     if (error) {
       toast.show('No se pudo agregar el producto: ' + error.message, 'error')
       return
     }
     setNuevoNombre('')
+    setNuevoServido('completa')
     setNuevoMlBotella('')
     setNuevoMlPorcion('')
     setNuevoCosto('')
     setNuevoPrecio('')
+    setNuevoUsaEmpaque(false)
+    setNuevoEmpaqueNombre('Caja')
+    setNuevoUnidadesPorCaja('24')
     setShowNuevoProducto(false)
     toast.show('Producto agregado.')
     cargar()
@@ -69,7 +82,12 @@ export default function Catalogo() {
   async function guardarProducto(p: Producto) {
     const { error } = await supabase
       .from('productos')
-      .update({ costo_compra: p.costo_compra, precio_venta_porcion: p.precio_venta_porcion })
+      .update({
+        costo_compra: p.costo_compra,
+        precio_venta_porcion: p.precio_venta_porcion,
+        unidades_por_caja: p.unidades_por_caja || 1,
+        empaque_nombre: p.unidades_por_caja > 1 ? p.empaque_nombre || 'Caja' : null,
+      })
       .eq('id', p.id)
     if (error) {
       toast.show('No se pudo guardar: ' + error.message, 'error')
@@ -84,10 +102,18 @@ export default function Catalogo() {
     cargar()
   }
 
-  function editarLocal(id: string, campo: 'costo_compra' | 'precio_venta_porcion', valor: string) {
+  function editarLocal(
+    id: string,
+    campo: 'costo_compra' | 'precio_venta_porcion' | 'unidades_por_caja',
+    valor: string
+  ) {
     setProductos((prev) =>
       prev.map((p) => (p.id === id ? { ...p, [campo]: Number(valor) || 0 } : p))
     )
+  }
+
+  function editarLocalTexto(id: string, campo: 'empaque_nombre', valor: string) {
+    setProductos((prev) => prev.map((p) => (p.id === id ? { ...p, [campo]: valor } : p)))
   }
 
   async function agregarBar(e: FormEvent) {
@@ -267,36 +293,103 @@ export default function Catalogo() {
                       <span style={{ marginLeft: 6 }}>{expanded ? '▲' : '▼'}</span>
                     </span>
                   </button>
-                  {expanded && (
-                    <div style={{ padding: '0 16px 16px' }}>
-                      <div className="field">
-                        <label>Costo de compra (₡)</label>
-                        <input
-                          type="number"
-                          value={p.costo_compra}
-                          onChange={(e) => editarLocal(p.id, 'costo_compra', e.target.value)}
-                        />
-                      </div>
-                      <div className="field">
-                        <label>Precio de venta por porción (₡)</label>
-                        <input
-                          type="number"
-                          value={p.precio_venta_porcion}
-                          onChange={(e) =>
-                            editarLocal(p.id, 'precio_venta_porcion', e.target.value)
-                          }
-                        />
-                      </div>
-                      <div className="row-actions">
-                        <button className="icon-btn" onClick={() => guardarProducto(p)}>
-                          Guardar
-                        </button>
-                        <button className="icon-btn" onClick={() => toggleProducto(p)}>
-                          {p.activo ? 'Desactivar' : 'Activar'}
-                        </button>
-                      </div>
-                    </div>
-                  )}
+                  {expanded &&
+                    (() => {
+                      const esShot =
+                        p.ml_botella != null && p.ml_porcion != null && p.ml_botella !== p.ml_porcion
+                      const usaEmpaque = p.unidades_por_caja > 1
+                      return (
+                        <div style={{ padding: '0 16px 16px' }}>
+                          <div className="field">
+                            <label>
+                              {esShot
+                                ? 'Costo de compra por botella completa (₡)'
+                                : 'Costo de compra por unidad (₡)'}
+                            </label>
+                            <input
+                              type="number"
+                              value={p.costo_compra}
+                              onChange={(e) => editarLocal(p.id, 'costo_compra', e.target.value)}
+                            />
+                            {esShot && (
+                              <div
+                                style={{ marginTop: 4, fontSize: '0.78rem', color: 'var(--text-muted)' }}
+                              >
+                                No es el costo del shot — es lo que cuesta la botella entera (
+                                {p.ml_botella}ml).
+                              </div>
+                            )}
+                          </div>
+                          <div className="field">
+                            <label>
+                              Precio de venta {esShot ? `por shot (${p.ml_porcion}ml)` : 'por unidad'} (₡)
+                            </label>
+                            <input
+                              type="number"
+                              value={p.precio_venta_porcion}
+                              onChange={(e) =>
+                                editarLocal(p.id, 'precio_venta_porcion', e.target.value)
+                              }
+                            />
+                          </div>
+                          <label
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: 10,
+                              marginBottom: usaEmpaque ? 12 : 16,
+                              fontSize: '0.9rem',
+                            }}
+                          >
+                            <input
+                              type="checkbox"
+                              checked={usaEmpaque}
+                              onChange={(e) =>
+                                editarLocal(
+                                  p.id,
+                                  'unidades_por_caja',
+                                  e.target.checked ? '24' : '1'
+                                )
+                              }
+                              style={{ width: 18, height: 18 }}
+                            />
+                            Se cuenta por caja/paquete (no por unidad suelta)
+                          </label>
+                          {usaEmpaque && (
+                            <div style={{ display: 'flex', gap: 10 }}>
+                              <div className="field" style={{ flex: 1 }}>
+                                <label>Nombre del empaque</label>
+                                <input
+                                  value={p.empaque_nombre ?? ''}
+                                  placeholder="Caja, Paquete..."
+                                  onChange={(e) =>
+                                    editarLocalTexto(p.id, 'empaque_nombre', e.target.value)
+                                  }
+                                />
+                              </div>
+                              <div className="field" style={{ flex: 1 }}>
+                                <label>Unidades por empaque</label>
+                                <input
+                                  type="number"
+                                  value={p.unidades_por_caja}
+                                  onChange={(e) =>
+                                    editarLocal(p.id, 'unidades_por_caja', e.target.value)
+                                  }
+                                />
+                              </div>
+                            </div>
+                          )}
+                          <div className="row-actions">
+                            <button className="icon-btn" onClick={() => guardarProducto(p)}>
+                              Guardar
+                            </button>
+                            <button className="icon-btn" onClick={() => toggleProducto(p)}>
+                              {p.activo ? 'Desactivar' : 'Activar'}
+                            </button>
+                          </div>
+                        </div>
+                      )
+                    })()}
                 </div>
               )
             })}
@@ -332,34 +425,80 @@ export default function Catalogo() {
                   </button>
                 </div>
                 <div className="field">
-                  <label htmlFor="p-ml-botella">ml por botella/unidad</label>
-                  <input
-                    id="p-ml-botella"
-                    type="number"
-                    value={nuevoMlBotella}
-                    onChange={(e) => setNuevoMlBotella(e.target.value)}
-                  />
+                  <label>¿Cómo se sirve?</label>
+                  <div className="type-toggle">
+                    <button
+                      type="button"
+                      className={nuevoServido === 'completa' ? 'active' : ''}
+                      onClick={() => setNuevoServido('completa')}
+                    >
+                      🍾 Completa (cerveza, soda)
+                    </button>
+                    <button
+                      type="button"
+                      className={nuevoServido === 'shot' ? 'active' : ''}
+                      onClick={() => setNuevoServido('shot')}
+                    >
+                      🥃 Por shot/copa
+                    </button>
+                  </div>
                 </div>
+
+                {nuevoServido === 'completa' ? (
+                  <div className="field">
+                    <label htmlFor="p-ml-botella">ml por botella/lata/unidad</label>
+                    <input
+                      id="p-ml-botella"
+                      type="number"
+                      value={nuevoMlBotella}
+                      onChange={(e) => setNuevoMlBotella(e.target.value)}
+                    />
+                  </div>
+                ) : (
+                  <>
+                    <div className="field">
+                      <label htmlFor="p-ml-botella">ml por botella</label>
+                      <input
+                        id="p-ml-botella"
+                        type="number"
+                        value={nuevoMlBotella}
+                        onChange={(e) => setNuevoMlBotella(e.target.value)}
+                      />
+                    </div>
+                    <div className="field">
+                      <label htmlFor="p-ml-porcion">ml por shot/copa (la porción que se sirve)</label>
+                      <input
+                        id="p-ml-porcion"
+                        type="number"
+                        value={nuevoMlPorcion}
+                        onChange={(e) => setNuevoMlPorcion(e.target.value)}
+                      />
+                    </div>
+                  </>
+                )}
+
                 <div className="field">
-                  <label htmlFor="p-ml-porcion">ml por porción (shot/copa/vaso)</label>
-                  <input
-                    id="p-ml-porcion"
-                    type="number"
-                    value={nuevoMlPorcion}
-                    onChange={(e) => setNuevoMlPorcion(e.target.value)}
-                  />
-                </div>
-                <div className="field">
-                  <label htmlFor="p-costo">Costo de compra por unidad (₡)</label>
+                  <label htmlFor="p-costo">
+                    {nuevoServido === 'shot'
+                      ? 'Costo de compra por botella completa (₡)'
+                      : 'Costo de compra por unidad (₡)'}
+                  </label>
                   <input
                     id="p-costo"
                     type="number"
                     value={nuevoCosto}
                     onChange={(e) => setNuevoCosto(e.target.value)}
                   />
+                  {nuevoServido === 'shot' && (
+                    <div style={{ marginTop: 4, fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+                      No es el costo del shot — es lo que cuesta la botella entera.
+                    </div>
+                  )}
                 </div>
                 <div className="field">
-                  <label htmlFor="p-precio">Precio de venta por porción (₡)</label>
+                  <label htmlFor="p-precio">
+                    Precio de venta {nuevoServido === 'shot' ? 'por shot/copa' : 'por unidad'} (₡)
+                  </label>
                   <input
                     id="p-precio"
                     type="number"
@@ -367,7 +506,50 @@ export default function Catalogo() {
                     onChange={(e) => setNuevoPrecio(e.target.value)}
                   />
                 </div>
-                <button className="btn-primary" type="submit">
+
+                <label
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 10,
+                    marginBottom: nuevoUsaEmpaque ? 12 : 20,
+                    fontSize: '0.9rem',
+                  }}
+                >
+                  <input
+                    type="checkbox"
+                    checked={nuevoUsaEmpaque}
+                    onChange={(e) => setNuevoUsaEmpaque(e.target.checked)}
+                    style={{ width: 18, height: 18 }}
+                  />
+                  Se cuenta por caja/paquete (no por unidad suelta)
+                </label>
+                {nuevoUsaEmpaque && (
+                  <div className="field">
+                    <div style={{ display: 'flex', gap: 10 }}>
+                      <div className="field" style={{ flex: 1, marginBottom: 0 }}>
+                        <label htmlFor="p-empaque-nombre">Nombre del empaque</label>
+                        <input
+                          id="p-empaque-nombre"
+                          value={nuevoEmpaqueNombre}
+                          placeholder="Caja, Paquete..."
+                          onChange={(e) => setNuevoEmpaqueNombre(e.target.value)}
+                        />
+                      </div>
+                      <div className="field" style={{ flex: 1, marginBottom: 0 }}>
+                        <label htmlFor="p-unidades-caja">Unidades por empaque</label>
+                        <input
+                          id="p-unidades-caja"
+                          type="number"
+                          value={nuevoUnidadesPorCaja}
+                          onChange={(e) => setNuevoUnidadesPorCaja(e.target.value)}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                <button className="btn-primary" type="submit" style={{ marginTop: 20 }}>
                   Agregar producto
                 </button>
               </form>
