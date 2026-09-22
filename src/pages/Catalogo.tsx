@@ -390,50 +390,28 @@ export default function Catalogo() {
                             ¿Este producto llega en caja o paquete?
                           </label>
                           {usaEmpaque && (
-                            <>
-                              <div className="type-toggle" style={{ marginBottom: 10 }}>
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    editarLocalTexto(p.id, 'empaque_nombre', 'Caja')
-                                    editarLocal(p.id, 'unidades_por_caja', '24')
-                                  }}
-                                >
-                                  📦 Caja (24)
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    editarLocalTexto(p.id, 'empaque_nombre', 'Paquete')
-                                    editarLocal(p.id, 'unidades_por_caja', '12')
-                                  }}
-                                >
-                                  📦 Paquete (12)
-                                </button>
+                            <div style={{ display: 'flex', gap: 10 }}>
+                              <div className="field" style={{ flex: 1 }}>
+                                <label>Nombre del empaque</label>
+                                <input
+                                  value={p.empaque_nombre ?? ''}
+                                  placeholder="Ej: Caja, Paquete..."
+                                  onChange={(e) =>
+                                    editarLocalTexto(p.id, 'empaque_nombre', e.target.value)
+                                  }
+                                />
                               </div>
-                              <div style={{ display: 'flex', gap: 10 }}>
-                                <div className="field" style={{ flex: 1 }}>
-                                  <label>Nombre del empaque</label>
-                                  <input
-                                    value={p.empaque_nombre ?? ''}
-                                    placeholder="Ej: Six pack, Fardo..."
-                                    onChange={(e) =>
-                                      editarLocalTexto(p.id, 'empaque_nombre', e.target.value)
-                                    }
-                                  />
-                                </div>
-                                <div className="field" style={{ flex: 1 }}>
-                                  <label>Unidades que trae</label>
-                                  <input
-                                    type="number"
-                                    value={p.unidades_por_caja}
-                                    onChange={(e) =>
-                                      editarLocal(p.id, 'unidades_por_caja', e.target.value)
-                                    }
-                                  />
-                                </div>
+                              <div className="field" style={{ flex: 1 }}>
+                                <label>Unidades que trae</label>
+                                <input
+                                  type="number"
+                                  value={p.unidades_por_caja}
+                                  onChange={(e) =>
+                                    editarLocal(p.id, 'unidades_por_caja', e.target.value)
+                                  }
+                                />
                               </div>
-                            </>
+                            </div>
                           )}
                           <div className="row-actions">
                             <button className="icon-btn" onClick={() => guardarProducto(p)}>
