@@ -15,6 +15,12 @@ const DATOS_CATEGORIA: Record<CategoriaEmpaque, { unidades: number; nombre: stri
   licor: { unidades: 1, nombre: null },
 }
 
+const LABEL_CATEGORIA: Record<CategoriaEmpaque, string> = {
+  cerveza: '🍺 Cerveza (caja 24)',
+  refresco: '🥤 Refresco (paq 12)',
+  licor: '🥃 Licor (botella)',
+}
+
 function categoriaDe(p: Producto): CategoriaEmpaque {
   if (p.unidades_por_caja <= 1) return 'licor'
   return (p.empaque_nombre || '').toLowerCase().includes('paquete') ? 'refresco' : 'cerveza'
@@ -27,6 +33,7 @@ export default function Catalogo() {
   const [bares, setBares] = useState<Bar[]>([])
 
   const [expandedId, setExpandedId] = useState<string | null>(null)
+  const [editandoCategoriaId, setEditandoCategoriaId] = useState<string | null>(null)
   const [showNuevoProducto, setShowNuevoProducto] = useState(false)
   const [showNuevoBar, setShowNuevoBar] = useState(false)
 
@@ -400,38 +407,61 @@ export default function Catalogo() {
                           </div>
                           <div className="field">
                             <label>¿Cómo se cuenta este producto?</label>
-                            <div className="type-toggle">
-                              <button
-                                type="button"
-                                className={categoriaDe(p) === 'cerveza' ? 'active' : ''}
-                                onClick={() => {
-                                  editarLocal(p.id, 'unidades_por_caja', '24')
-                                  editarLocalTexto(p.id, 'empaque_nombre', 'Caja')
+                            {editandoCategoriaId === p.id ? (
+                              <div className="type-toggle">
+                                <button
+                                  type="button"
+                                  className={categoriaDe(p) === 'cerveza' ? 'active' : ''}
+                                  onClick={() => {
+                                    editarLocal(p.id, 'unidades_por_caja', '24')
+                                    editarLocalTexto(p.id, 'empaque_nombre', 'Caja')
+                                    setEditandoCategoriaId(null)
+                                  }}
+                                >
+                                  🍺 Cerveza (caja 24)
+                                </button>
+                                <button
+                                  type="button"
+                                  className={categoriaDe(p) === 'refresco' ? 'active' : ''}
+                                  onClick={() => {
+                                    editarLocal(p.id, 'unidades_por_caja', '12')
+                                    editarLocalTexto(p.id, 'empaque_nombre', 'Paquete')
+                                    setEditandoCategoriaId(null)
+                                  }}
+                                >
+                                  🥤 Refresco (paq 12)
+                                </button>
+                                <button
+                                  type="button"
+                                  className={categoriaDe(p) === 'licor' ? 'active' : ''}
+                                  onClick={() => {
+                                    editarLocal(p.id, 'unidades_por_caja', '1')
+                                    editarLocalTexto(p.id, 'empaque_nombre', '')
+                                    setEditandoCategoriaId(null)
+                                  }}
+                                >
+                                  🥃 Licor (botella)
+                                </button>
+                              </div>
+                            ) : (
+                              <div
+                                style={{
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'space-between',
+                                  fontSize: '0.9rem',
                                 }}
                               >
-                                🍺 Cerveza (caja 24)
-                              </button>
-                              <button
-                                type="button"
-                                className={categoriaDe(p) === 'refresco' ? 'active' : ''}
-                                onClick={() => {
-                                  editarLocal(p.id, 'unidades_por_caja', '12')
-                                  editarLocalTexto(p.id, 'empaque_nombre', 'Paquete')
-                                }}
-                              >
-                                🥤 Refresco (paq 12)
-                              </button>
-                              <button
-                                type="button"
-                                className={categoriaDe(p) === 'licor' ? 'active' : ''}
-                                onClick={() => {
-                                  editarLocal(p.id, 'unidades_por_caja', '1')
-                                  editarLocalTexto(p.id, 'empaque_nombre', '')
-                                }}
-                              >
-                                🥃 Licor (botella)
-                              </button>
-                            </div>
+                                <span>{LABEL_CATEGORIA[categoriaDe(p)]}</span>
+                                <button
+                                  type="button"
+                                  className="icon-btn"
+                                  onClick={() => setEditandoCategoriaId(p.id)}
+                                >
+                                  Cambiar
+                                </button>
+                              </div>
+                            )}
                           </div>
                           <div className="row-actions">
                             <button className="icon-btn" onClick={() => guardarProducto(p)}>
