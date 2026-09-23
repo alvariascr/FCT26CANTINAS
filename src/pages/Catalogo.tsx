@@ -299,13 +299,18 @@ export default function Catalogo() {
             + Nuevo producto
           </button>
 
-          <div className="card" style={{ padding: 0 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             {productos.map((p) => {
               const expanded = expandedId === p.id
               return (
                 <div
                   key={p.id}
-                  style={{ borderBottom: '1px solid var(--border)', opacity: p.activo ? 1 : 0.4 }}
+                  style={{
+                    background: 'var(--surface)',
+                    borderRadius: 'var(--radius)',
+                    opacity: p.activo ? 1 : 0.4,
+                    overflow: 'hidden',
+                  }}
                 >
                   <button
                     onClick={() => setExpandedId(expanded ? null : p.id)}
@@ -317,12 +322,24 @@ export default function Catalogo() {
                       background: 'none',
                       border: 'none',
                       color: 'var(--text)',
-                      padding: '14px 16px',
+                      padding: '12px 16px',
                       textAlign: 'left',
                       fontSize: '0.95rem',
+                      fontFamily: 'inherit',
                     }}
                   >
-                    <span>{p.nombre}</span>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                      <span
+                        style={{
+                          width: 34,
+                          height: 34,
+                          borderRadius: 10,
+                          background: `var(--cat-${categoriaDe(p)})`,
+                          flexShrink: 0,
+                        }}
+                      />
+                      <span style={{ fontWeight: 600 }}>{p.nombre}</span>
+                    </span>
                     <span style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>
                       ₡{moneda.format(p.precio_venta_porcion)}{' '}
                       <span style={{ marginLeft: 6 }}>{expanded ? '▲' : '▼'}</span>
