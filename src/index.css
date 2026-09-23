@@ -1,15 +1,19 @@
 :root {
-  --bg: #0f1117;
-  --surface: #1a1d27;
-  --surface-alt: #232735;
-  --border: #2e3342;
-  --text: #f2f3f7;
-  --text-muted: #9aa0b4;
-  --accent: #3a6bc9;
-  --accent-strong: #5a8bde;
+  --bg: #15131a;
+  --surface: #211e28;
+  --surface-alt: #2a2732;
+  --border: #322f3b;
+  --text: #f3f1ec;
+  --text-muted: #8b8794;
+  --accent: #ff6355;
+  --accent-strong: #ff8571;
+  --accent-ink: #15131a;
   --success: #2ecc71;
-  --danger: #ff5c5c;
-  --radius: 14px;
+  --danger: #ff4470;
+  --radius: 16px;
+  --cat-cerveza: #ffb627;
+  --cat-refresco: #35d0c0;
+  --cat-licor: #b18cff;
   color-scheme: dark;
 }
 
@@ -27,7 +31,7 @@ body {
   margin: 0;
   background: var(--bg);
   color: var(--text);
-  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  font-family: 'Space Grotesk', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   -webkit-tap-highlight-color: transparent;
   overflow-x: hidden;
 }
@@ -98,7 +102,8 @@ main {
 }
 
 .nav-bottom a.active {
-  color: var(--accent-strong);
+  color: var(--accent);
+  font-weight: 700;
 }
 
 h2 {
@@ -130,11 +135,12 @@ h2 {
 .field textarea {
   width: 100%;
   padding: 14px;
-  border-radius: 10px;
+  border-radius: 12px;
   border: 1px solid var(--border);
   background: var(--surface-alt);
   color: var(--text);
   font-size: 1rem;
+  font-family: inherit;
 }
 
 .field textarea {
@@ -165,42 +171,59 @@ h2 {
 .filter-chips button.active {
   background: var(--accent);
   border-color: var(--accent);
-  color: white;
-  font-weight: 600;
+  color: var(--accent-ink);
+  font-weight: 700;
 }
 
 .type-toggle {
   display: flex;
-  gap: 8px;
+  gap: 4px;
   margin-bottom: 16px;
+  background: var(--surface-alt);
+  padding: 4px;
+  border-radius: 999px;
 }
 
 .type-toggle button {
   flex: 1;
   padding: 10px;
-  border-radius: 10px;
-  border: 1px solid var(--border);
-  background: var(--surface-alt);
+  border-radius: 999px;
+  border: none;
+  background: transparent;
   color: var(--text-muted);
-  font-size: 0.9rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  font-family: inherit;
 }
 
 .type-toggle button.active {
-  background: rgba(58, 107, 201, 0.18);
-  border-color: var(--accent);
-  color: var(--accent-strong);
-  font-weight: 600;
+  background: var(--text);
+  color: var(--bg);
+  font-weight: 700;
+}
+
+.type-toggle button.active.cat-cerveza {
+  background: var(--cat-cerveza);
+}
+
+.type-toggle button.active.cat-refresco {
+  background: var(--cat-refresco);
+}
+
+.type-toggle button.active.cat-licor {
+  background: var(--cat-licor);
 }
 
 .btn-primary {
   width: 100%;
   padding: 16px;
-  border-radius: 12px;
+  border-radius: var(--radius);
   border: none;
   background: var(--accent);
-  color: white;
+  color: var(--accent-ink);
   font-size: 1.05rem;
   font-weight: 700;
+  font-family: inherit;
 }
 
 .btn-primary:active {
@@ -235,7 +258,7 @@ h2 {
 .qty-stepper button {
   width: 52px;
   height: 52px;
-  border-radius: 12px;
+  border-radius: 14px;
   border: 1px solid var(--border);
   background: var(--surface-alt);
   color: var(--text);

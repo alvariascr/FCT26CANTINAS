@@ -411,7 +411,7 @@ export default function Catalogo() {
                               <div className="type-toggle">
                                 <button
                                   type="button"
-                                  className={categoriaDe(p) === 'cerveza' ? 'active' : ''}
+                                  className={categoriaDe(p) === 'cerveza' ? 'active cat-cerveza' : ''}
                                   onClick={() => {
                                     editarLocal(p.id, 'unidades_por_caja', '24')
                                     editarLocalTexto(p.id, 'empaque_nombre', 'Caja')
@@ -422,7 +422,7 @@ export default function Catalogo() {
                                 </button>
                                 <button
                                   type="button"
-                                  className={categoriaDe(p) === 'refresco' ? 'active' : ''}
+                                  className={categoriaDe(p) === 'refresco' ? 'active cat-refresco' : ''}
                                   onClick={() => {
                                     editarLocal(p.id, 'unidades_por_caja', '12')
                                     editarLocalTexto(p.id, 'empaque_nombre', 'Paquete')
@@ -433,7 +433,7 @@ export default function Catalogo() {
                                 </button>
                                 <button
                                   type="button"
-                                  className={categoriaDe(p) === 'licor' ? 'active' : ''}
+                                  className={categoriaDe(p) === 'licor' ? 'active cat-licor' : ''}
                                   onClick={() => {
                                     editarLocal(p.id, 'unidades_por_caja', '1')
                                     editarLocalTexto(p.id, 'empaque_nombre', '')
@@ -520,21 +520,21 @@ export default function Catalogo() {
                   <div className="type-toggle">
                     <button
                       type="button"
-                      className={nuevoCategoria === 'cerveza' ? 'active' : ''}
+                      className={nuevoCategoria === 'cerveza' ? 'active cat-cerveza' : ''}
                       onClick={() => setNuevoCategoria('cerveza')}
                     >
                       🍺 Cerveza (caja 24)
                     </button>
                     <button
                       type="button"
-                      className={nuevoCategoria === 'refresco' ? 'active' : ''}
+                      className={nuevoCategoria === 'refresco' ? 'active cat-refresco' : ''}
                       onClick={() => setNuevoCategoria('refresco')}
                     >
                       🥤 Refresco (paq 12)
                     </button>
                     <button
                       type="button"
-                      className={nuevoCategoria === 'licor' ? 'active' : ''}
+                      className={nuevoCategoria === 'licor' ? 'active cat-licor' : ''}
                       onClick={() => setNuevoCategoria('licor')}
                     >
                       🥃 Licor (botella)
