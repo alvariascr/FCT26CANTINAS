@@ -325,20 +325,42 @@ export default function Catalogo() {
                     (() => {
                       const esShot =
                         p.ml_botella != null && p.ml_porcion != null && p.ml_botella !== p.ml_porcion
+                      const categoria = categoriaDe(p)
+                      const esCaja = categoria !== 'licor'
+                      const nombreEmpaque = (p.empaque_nombre || DATOS_CATEGORIA[categoria].nombre || 'caja').toLowerCase()
                       return (
                         <div style={{ padding: '0 16px 16px' }}>
                           <div className="field">
                             <label>
-                              {esShot
-                                ? 'Costo de compra por botella completa (₡)'
-                                : 'Costo de compra por unidad (₡)'}
+                              {esCaja
+                                ? `Costo de compra de ${nombreEmpaque} completa (₡)`
+                                : esShot
+                                  ? 'Costo de compra por botella completa (₡)'
+                                  : 'Costo de compra por unidad (₡)'}
                             </label>
                             <input
                               type="number"
-                              value={p.costo_compra}
-                              onChange={(e) => editarLocal(p.id, 'costo_compra', e.target.value)}
+                              value={
+                                esCaja
+                                  ? Math.round(p.costo_compra * p.unidades_por_caja)
+                                  : p.costo_compra
+                              }
+                              onChange={(e) =>
+                                editarLocal(
+                                  p.id,
+                                  'costo_compra',
+                                  esCaja
+                                    ? String((Number(e.target.value) || 0) / p.unidades_por_caja)
+                                    : e.target.value
+                                )
+                              }
                             />
-                            {esShot && (
+                            {esCaja && (
+                              <div style={{ marginTop: 4, fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+                                = ₡{moneda.format(p.costo_compra)} por unidad
+                              </div>
+                            )}
+                            {!esCaja && esShot && (
                               <div
                                 style={{ marginTop: 4, fontSize: '0.78rem', color: 'var(--text-muted)' }}
                               >
@@ -349,15 +371,32 @@ export default function Catalogo() {
                           </div>
                           <div className="field">
                             <label>
-                              Precio de venta {esShot ? `por shot (${p.ml_porcion}ml)` : 'por unidad'} (₡)
+                              {esCaja
+                                ? `Precio de venta de ${nombreEmpaque} completa (₡)`
+                                : `Precio de venta ${esShot ? `por shot (${p.ml_porcion}ml)` : 'por unidad'} (₡)`}
                             </label>
                             <input
                               type="number"
-                              value={p.precio_venta_porcion}
+                              value={
+                                esCaja
+                                  ? Math.round(p.precio_venta_porcion * p.unidades_por_caja)
+                                  : p.precio_venta_porcion
+                              }
                               onChange={(e) =>
-                                editarLocal(p.id, 'precio_venta_porcion', e.target.value)
+                                editarLocal(
+                                  p.id,
+                                  'precio_venta_porcion',
+                                  esCaja
+                                    ? String((Number(e.target.value) || 0) / p.unidades_por_caja)
+                                    : e.target.value
+                                )
                               }
                             />
+                            {esCaja && (
+                              <div style={{ marginTop: 4, fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+                                = ₡{moneda.format(p.precio_venta_porcion)} por unidad
+                              </div>
+                            )}
                           </div>
                           <div className="field">
                             <label>¿Cómo se cuenta este producto?</label>
