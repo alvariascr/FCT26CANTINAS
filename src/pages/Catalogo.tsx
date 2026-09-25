@@ -5,6 +5,10 @@ import { useToast } from '../lib/ToastContext'
 import type { Bar, Producto, TipoProducto } from '../lib/types'
 
 const moneda = new Intl.NumberFormat('es-CR', { maximumFractionDigits: 0 })
+const monedaCent = new Intl.NumberFormat('es-CR', {
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+})
 
 type Tab = 'productos' | 'bares'
 type CategoriaEmpaque = 'cerveza' | 'refresco' | 'licor'
@@ -381,7 +385,7 @@ export default function Catalogo() {
                             />
                             {esCaja && (
                               <div style={{ marginTop: 4, fontSize: '0.78rem', color: 'var(--text-muted)' }}>
-                                = ₡{moneda.format(p.costo_compra)} por unidad
+                                = ₡{monedaCent.format(p.costo_compra)} por unidad
                               </div>
                             )}
                             {!esCaja && esShot && (
@@ -418,7 +422,7 @@ export default function Catalogo() {
                             />
                             {esCaja && (
                               <div style={{ marginTop: 4, fontSize: '0.78rem', color: 'var(--text-muted)' }}>
-                                = ₡{moneda.format(p.precio_venta_porcion)} por unidad
+                                = ₡{monedaCent.format(p.precio_venta_porcion)} por unidad
                               </div>
                             )}
                           </div>
@@ -612,7 +616,7 @@ export default function Catalogo() {
                   {nuevoCategoria !== 'licor' && (
                     <div style={{ marginTop: 4, fontSize: '0.78rem', color: 'var(--text-muted)' }}>
                       = ₡
-                      {moneda.format(
+                      {monedaCent.format(
                         (Number(nuevoCosto) || 0) / DATOS_CATEGORIA[nuevoCategoria].unidades
                       )}{' '}
                       por unidad
@@ -634,7 +638,7 @@ export default function Catalogo() {
                   {nuevoCategoria !== 'licor' && (
                     <div style={{ marginTop: 4, fontSize: '0.78rem', color: 'var(--text-muted)' }}>
                       = ₡
-                      {moneda.format(
+                      {monedaCent.format(
                         (Number(nuevoPrecio) || 0) / DATOS_CATEGORIA[nuevoCategoria].unidades
                       )}{' '}
                       por unidad
