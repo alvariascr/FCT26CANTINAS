@@ -6,7 +6,6 @@ export function formatoEmpaque(stock: number, producto?: Producto) {
   const nombre = (producto?.empaque_nombre || 'Caja').toLowerCase()
   const cajas = Math.floor(stock / porCaja)
   const sobrante = stock % porCaja
-  if (cajas === 0 && sobrante > 0) return `${sobrante} u.`
   const textoCajas = `${cajas} ${nombre}${cajas === 1 ? '' : 's'}`
   return sobrante > 0 ? `${textoCajas} + ${sobrante} u.` : textoCajas
 }
