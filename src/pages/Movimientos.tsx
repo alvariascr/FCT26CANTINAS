@@ -4,6 +4,7 @@ import { useAuth } from '../lib/AuthContext'
 import { useToast } from '../lib/ToastContext'
 import Modal from '../components/Modal'
 import StockBadge from '../components/StockBadge'
+import { formatoEmpaque } from '../lib/formatoEmpaque'
 import type {
   Bar,
   MotivoIncidencia,
@@ -496,7 +497,11 @@ export default function Movimientos() {
               >
                 <div>
                   <div style={{ fontSize: '0.9rem' }}>
-                    {item.etiqueta} · {item.producto_nombre} · {item.cantidad}
+                    {item.etiqueta} · {item.producto_nombre} ·{' '}
+                    {formatoEmpaque(
+                      item.cantidad,
+                      productos.find((p) => p.id === item.producto_id)
+                    )}
                   </div>
                   <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
                     {item.bar_nombre ? `${item.bar_nombre} · ` : ''}
