@@ -5,6 +5,7 @@ import { useToast } from '../lib/ToastContext'
 import Modal from '../components/Modal'
 import StockBadge from '../components/StockBadge'
 import { formatoEmpaque } from '../lib/formatoEmpaque'
+import { MAX_CANTIDAD } from '../lib/limites'
 import type {
   Bar,
   MotivoIncidencia,
@@ -241,9 +242,11 @@ export default function Movimientos() {
     (modo === 'traslado' && cantidadReal > stockBodegaDisponible) ||
     (modo === 'devolucion' && cantidadReal > stockBarActual)
 
+  const excedeMaximo = cantidadReal > MAX_CANTIDAD
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (!productoId || cantidad <= 0) return
+    if (!productoId || cantidad <= 0 || excedeMaximo) return
     if (modo !== 'entrada' && !barId) return
     if (modo === 'traslado' && cantidadReal > stockBodegaDisponible) {
       toast.show(`No hay suficiente stock en bodega (disponible: ${stockBodegaDisponible}).`, 'error')
@@ -363,6 +366,11 @@ export default function Movimientos() {
               ⚠️ La cantidad supera el stock disponible.
             </div>
           )}
+          {excedeMaximo && (
+            <div style={{ marginTop: 6, fontSize: '0.85rem', color: 'var(--danger)' }}>
+              ⚠️ Cantidad demasiado grande (máximo {MAX_CANTIDAD} unidades).
+            </div>
+          )}
         </div>
 
         <div className="field">
@@ -417,7 +425,7 @@ export default function Movimientos() {
               value={cantidad === 0 ? '' : cantidad}
               onChange={(e) => {
                 const v = e.target.value
-                setCantidad(v === '' ? 0 : Math.max(0, Math.trunc(Number(v)) || 0))
+                setCantidad(v === '' ? 0 : Math.min(MAX_CANTIDAD, Math.max(0, Math.trunc(Number(v)) || 0)))
               }}
               onBlur={() => setCantidad((c) => (c <= 0 ? 1 : c))}
             />
@@ -441,7 +449,8 @@ export default function Movimientos() {
             !productoId ||
             cantidad <= 0 ||
             (modo !== 'entrada' && !barId) ||
-            excedeStock
+            excedeStock ||
+            excedeMaximo
           }
         >
           {saving
@@ -572,7 +581,7 @@ export default function Movimientos() {
                 value={editCantidad === 0 ? '' : editCantidad}
                 onChange={(e) => {
                   const v = e.target.value
-                  setEditCantidad(v === '' ? 0 : Math.max(0, Math.trunc(Number(v)) || 0))
+                  setEditCantidad(v === '' ? 0 : Math.min(MAX_CANTIDAD, Math.max(0, Math.trunc(Number(v)) || 0)))
                 }}
                 onBlur={() => setEditCantidad((c) => (c <= 0 ? 1 : c))}
                 required

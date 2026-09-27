@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabaseClient'
 import { useAuth } from '../lib/AuthContext'
 import { useToast } from '../lib/ToastContext'
 import type { Bar, MotivoIncidencia, Producto, TipoProducto } from '../lib/types'
+import { MAX_CANTIDAD } from '../lib/limites'
 
 const MOTIVOS: MotivoIncidencia[] = ['Rotura', 'Pérdida', 'Cortesía', 'Otro']
 
@@ -132,7 +133,7 @@ export default function Incidencia() {
               value={cantidad === 0 ? '' : cantidad}
               onChange={(e) => {
                 const v = e.target.value
-                setCantidad(v === '' ? 0 : Math.max(0, Math.trunc(Number(v)) || 0))
+                setCantidad(v === '' ? 0 : Math.min(MAX_CANTIDAD, Math.max(0, Math.trunc(Number(v)) || 0)))
               }}
               onBlur={() => setCantidad((c) => (c <= 0 ? 1 : c))}
             />
