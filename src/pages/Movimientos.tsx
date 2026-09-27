@@ -242,7 +242,9 @@ export default function Movimientos() {
     (modo === 'traslado' && cantidadReal > stockBodegaDisponible) ||
     (modo === 'devolucion' && cantidadReal > stockBarActual)
 
-  const maxEntrada = empaqueForm === 'unidad' ? MAX_CANTIDAD : MAX_EMPAQUES
+  const porCajaProducto = productos.find((p) => p.id === productoId)?.unidades_por_caja ?? 1
+  const maxSueltas = porCajaProducto > 1 ? porCajaProducto - 1 : MAX_CANTIDAD
+  const maxEntrada = empaqueForm === 'unidad' ? maxSueltas : MAX_EMPAQUES
   const nombreUnidadEntrada =
     empaqueForm === 'caja' ? 'cajas' : empaqueForm === 'paquete' ? 'paquetes' : 'unidades'
   const excedeMaximo = cantidad > maxEntrada || cantidadReal > MAX_CANTIDAD
@@ -371,7 +373,11 @@ export default function Movimientos() {
           )}
           {excedeMaximo && (
             <div style={{ marginTop: 6, fontSize: '0.85rem', color: 'var(--danger)' }}>
-              ⚠️ Cantidad demasiado grande (máximo {maxEntrada} {nombreUnidadEntrada}).
+              ⚠️ Cantidad demasiado grande (máximo {maxEntrada} {nombreUnidadEntrada}
+              {empaqueForm === 'unidad' && porCajaProducto > 1
+                ? '; desde ' + porCajaProducto + ' se cuenta como caja o paquete'
+                : ''}
+              ).
             </div>
           )}
         </div>
