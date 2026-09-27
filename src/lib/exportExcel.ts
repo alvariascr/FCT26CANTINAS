@@ -236,15 +236,15 @@ export async function generarExcel(datos: DatosExport) {
         .order('creado_en'),
       supabase
         .from('traslados')
-        .select('cantidad, creado_en, productos(nombre), bares(nombre)')
+        .select('cantidad, creado_en, productos(nombre), bares(nombre, es_cortesia)')
         .order('creado_en'),
       supabase
         .from('devoluciones')
-        .select('cantidad, creado_en, productos(nombre), bares(nombre)')
+        .select('cantidad, creado_en, productos(nombre), bares(nombre, es_cortesia)')
         .order('creado_en'),
       supabase
         .from('incidencias')
-        .select('cantidad, motivo, observaciones, creado_en, productos(nombre), bares(nombre)')
+        .select('cantidad, motivo, observaciones, creado_en, productos(nombre), bares(nombre, es_cortesia)')
         .order('creado_en'),
     ])
 
@@ -262,6 +262,7 @@ export async function generarExcel(datos: DatosExport) {
       tipo: 'Traslado',
       producto: r.productos?.nombre ?? '',
       bar: r.bares?.nombre ?? '',
+      esCortesia: r.bares?.es_cortesia ?? false,
       cantidad: r.cantidad,
       motivo: '',
       obs: '',
@@ -271,6 +272,7 @@ export async function generarExcel(datos: DatosExport) {
       tipo: 'Devolución',
       producto: r.productos?.nombre ?? '',
       bar: r.bares?.nombre ?? '',
+      esCortesia: r.bares?.es_cortesia ?? false,
       cantidad: r.cantidad,
       motivo: '',
       obs: '',
@@ -280,6 +282,7 @@ export async function generarExcel(datos: DatosExport) {
       tipo: 'Incidencia',
       producto: r.productos?.nombre ?? '',
       bar: r.bares?.nombre ?? '',
+      esCortesia: r.bares?.es_cortesia ?? false,
       cantidad: r.cantidad,
       motivo: r.motivo ?? '',
       obs: r.observaciones ?? '',
@@ -311,6 +314,32 @@ export async function generarExcel(datos: DatosExport) {
     })
   })
   estilizarHoja(wsMov, 'Historial completo de movimientos', 8)
+
+  // ---- Cortesías (detalle cronológico de las actividades marcadas como cortesía) ----
+  const cortesias = combinado.filter((r: Fila) => r.esCortesia)
+  const wsCortesia = wb.addWorksheet('Cortesías')
+  wsCortesia.columns = [
+    { header: 'Fecha', key: 'fecha', width: 20 },
+    { header: 'Tipo', key: 'tipo', width: 14 },
+    { header: 'Actividad', key: 'bar', width: 24 },
+    { header: 'Producto', key: 'producto', width: 28 },
+    { header: 'Cantidad (unid.)', key: 'cantidad', width: 14 },
+    { header: 'Cantidad (cajas/paq.)', key: 'cantidad_eq', width: 20 },
+  ]
+  cortesias.forEach((r: Fila) => {
+    wsCortesia.addRow({
+      fecha: new Date(r.creado_en).toLocaleString('es-CR'),
+      tipo: r.tipo,
+      bar: r.bar,
+      producto: r.producto,
+      cantidad: r.cantidad,
+      cantidad_eq: formatoEmpaque(r.cantidad, prodPorNombre.get(r.producto)),
+    })
+  })
+  if (cortesias.length === 0) {
+    wsCortesia.addRow({ fecha: 'No hay movimientos registrados en actividades de cortesía.' })
+  }
+  estilizarHoja(wsCortesia, 'Cortesías — detalle cronológico', 6)
 
   const buffer = await wb.xlsx.writeBuffer()
   const blob = new Blob([buffer], {
