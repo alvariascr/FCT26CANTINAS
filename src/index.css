@@ -579,7 +579,8 @@ th {
 }
 
 .reporte-band {
-  background: linear-gradient(135deg, #1f3d75, #3a6bc9);
+  background: #15131a;
+  border-bottom: 4px solid #ff6355;
   color: #ffffff;
   padding: 22px 20px;
   margin-top: 16px;
@@ -593,7 +594,7 @@ th {
 
 .reporte-subtitulo {
   margin: 0 0 4px;
-  color: #cfe0f9;
+  color: #ff8571;
   font-size: 1rem;
 }
 
@@ -610,32 +611,32 @@ th {
 .reporte h2 {
   font-size: 1rem;
   margin: 26px 0 10px;
-  color: #16233d;
-  border-bottom: 2px solid #d7e3f5;
+  color: #15131a;
+  border-bottom: 2px solid #e6e1d6;
   padding-bottom: 6px;
 }
 
 .reporte .collapsible {
   background: #ffffff;
-  border: 1px solid #d7e3f5;
+  border: 1px solid #e6e1d6;
   border-radius: 8px;
   margin: 18px 0;
 }
 
 .reporte .collapsible-header {
   padding: 12px 14px;
-  color: #16233d;
+  color: #15131a;
   font-size: 0.95rem;
 }
 
 .reporte .collapsible-subtitle,
 .reporte .collapsible-chevron {
-  color: #5f7599;
+  color: #8b8794;
 }
 
 .reporte .collapsible-body {
   padding: 0 14px 14px;
-  border-top: 1px solid #d7e3f5;
+  border-top: 1px solid #e6e1d6;
   padding-top: 12px;
 }
 
@@ -644,26 +645,26 @@ th {
   border-collapse: collapse;
   font-size: 0.78rem;
   margin-bottom: 4px;
-  border: 1px solid #d7e3f5;
+  border: 1px solid #e6e1d6;
 }
 
 .reporte th,
 .reporte td {
   text-align: left;
   padding: 7px 8px;
-  border-bottom: 1px solid #d7e3f5;
+  border-bottom: 1px solid #e6e1d6;
   color: #1a1a1a;
 }
 
 .reporte th {
-  background: #3a6bc9;
+  background: #15131a;
   color: #ffffff;
   font-weight: 700;
   border-bottom: none;
 }
 
 .reporte tbody tr:nth-child(even) {
-  background: #eef3fb;
+  background: #f7f4ee;
 }
 
 .reporte-nota {
@@ -693,10 +694,10 @@ th {
 .reporte-tile {
   container-type: inline-size;
   min-width: 0;
-  border: 1px solid #d7e3f5;
-  border-left: 4px solid #3a6bc9;
+  border: 1px solid #e6e1d6;
+  border-left: 4px solid #ff6355;
   border-radius: 6px;
-  background: #f4f8fd;
+  background: #faf7f2;
   padding: 10px 12px;
   display: flex;
   flex-direction: column;
@@ -705,14 +706,14 @@ th {
 
 .reporte-tile span {
   font-size: 0.68rem;
-  color: #5f7599;
+  color: #8b8794;
   text-transform: uppercase;
   letter-spacing: 0.03em;
 }
 
 .reporte-tile strong {
   font-size: clamp(0.6rem, 13cqw, 1.05rem);
-  color: #16233d;
+  color: #15131a;
   line-height: 1.2;
   white-space: nowrap;
   overflow: hidden;
