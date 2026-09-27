@@ -315,9 +315,46 @@ export async function generarExcel(datos: DatosExport) {
   })
   estilizarHoja(wsMov, 'Historial completo de movimientos', 8)
 
-  // ---- Cortesías (detalle cronológico de las actividades marcadas como cortesía) ----
+  // ---- Cortesías — resumen (cuánto costó y cuánto hubiera valido vender cada actividad) ----
+  const baresCortesiaResumen = datos.resumenBar.filter((b) => b.es_cortesia)
+  const wsCortesiaResumen = wb.addWorksheet('Cortesías - Resumen')
+  wsCortesiaResumen.columns = [
+    { header: 'Actividad', key: 'bar', width: 26 },
+    { header: 'Entregado (unid.)', key: 'entregado', width: 14 },
+    { header: 'Costo total (₡)', key: 'costo', width: 16 },
+    { header: 'Valor equivalente (₡)', key: 'valor_eq', width: 20 },
+    { header: 'Ganancia que hubiera sido (₡)', key: 'ganancia_pot', width: 24 },
+  ]
+  baresCortesiaResumen.forEach((b) => {
+    wsCortesiaResumen.addRow({
+      bar: b.bar_nombre,
+      entregado: b.total_vendido,
+      costo: b.costo_total,
+      valor_eq: b.valor_equivalente_total,
+      ganancia_pot: b.valor_equivalente_total - b.costo_total,
+    })
+  })
+  if (baresCortesiaResumen.length === 0) {
+    wsCortesiaResumen.addRow({ bar: 'No hay actividades marcadas como cortesía.' })
+  } else {
+    const totalCosto = baresCortesiaResumen.reduce((acc, b) => acc + b.costo_total, 0)
+    const totalValorEq = baresCortesiaResumen.reduce((acc, b) => acc + b.valor_equivalente_total, 0)
+    const filaTotal = wsCortesiaResumen.addRow({
+      bar: 'Total',
+      costo: totalCosto,
+      valor_eq: totalValorEq,
+      ganancia_pot: totalValorEq - totalCosto,
+    })
+    filaTotal.font = { bold: true }
+  }
+  ;['costo', 'valor_eq', 'ganancia_pot'].forEach((k) => {
+    wsCortesiaResumen.getColumn(k).numFmt = MONEY_FMT
+  })
+  estilizarHoja(wsCortesiaResumen, 'Cortesías — costo y ganancia que hubiera sido', 5)
+
+  // ---- Cortesías — detalle cronológico, con costo y valor por movimiento ----
   const cortesias = combinado.filter((r: Fila) => r.esCortesia)
-  const wsCortesia = wb.addWorksheet('Cortesías')
+  const wsCortesia = wb.addWorksheet('Cortesías - Detalle')
   wsCortesia.columns = [
     { header: 'Fecha', key: 'fecha', width: 20 },
     { header: 'Tipo', key: 'tipo', width: 14 },
@@ -325,21 +362,33 @@ export async function generarExcel(datos: DatosExport) {
     { header: 'Producto', key: 'producto', width: 28 },
     { header: 'Cantidad (unid.)', key: 'cantidad', width: 14 },
     { header: 'Cantidad (cajas/paq.)', key: 'cantidad_eq', width: 20 },
+    { header: 'Costo (₡)', key: 'costo', width: 14 },
+    { header: 'Valor equivalente (₡)', key: 'valor_eq', width: 18 },
   ]
   cortesias.forEach((r: Fila) => {
+    const p = prodPorNombre.get(r.producto)
+    const porciones =
+      p?.ml_botella != null && p?.ml_porcion != null && p.ml_porcion > 0
+        ? p.ml_botella / p.ml_porcion
+        : 1
     wsCortesia.addRow({
       fecha: new Date(r.creado_en).toLocaleString('es-CR'),
       tipo: r.tipo,
       bar: r.bar,
       producto: r.producto,
       cantidad: r.cantidad,
-      cantidad_eq: formatoEmpaque(r.cantidad, prodPorNombre.get(r.producto)),
+      cantidad_eq: formatoEmpaque(r.cantidad, p),
+      costo: r.cantidad * (p?.costo_compra ?? 0),
+      valor_eq: r.cantidad * porciones * (p?.precio_venta_porcion ?? 0),
     })
   })
   if (cortesias.length === 0) {
     wsCortesia.addRow({ fecha: 'No hay movimientos registrados en actividades de cortesía.' })
   }
-  estilizarHoja(wsCortesia, 'Cortesías — detalle cronológico', 6)
+  ;['costo', 'valor_eq'].forEach((k) => {
+    wsCortesia.getColumn(k).numFmt = MONEY_FMT
+  })
+  estilizarHoja(wsCortesia, 'Cortesías — detalle cronológico', 8)
 
   const buffer = await wb.xlsx.writeBuffer()
   const blob = new Blob([buffer], {
