@@ -7,7 +7,7 @@ import Collapsible from '../components/Collapsible'
 import type { Producto, ResumenBarRow, ResumenProductoRow, StockBodegaRow } from '../lib/types'
 import { formatoEmpaque, unidadesYEmpaque } from '../lib/formatoEmpaque'
 
-const moneda = new Intl.NumberFormat('es-CR', { maximumFractionDigits: 0 })
+const moneda = new Intl.NumberFormat('es-CR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 
 export default function Reporte() {
   const navigate = useNavigate()
