@@ -1,5 +1,6 @@
 import { supabase } from './supabaseClient'
-import type { ResumenBarRow, ResumenProductoRow, StockBodegaRow } from './types'
+import type { Producto, ResumenBarRow, ResumenProductoRow, StockBodegaRow } from './types'
+import { formatoEmpaque } from './formatoEmpaque'
 
 const MONEY_FMT = '#,##0'
 
@@ -18,6 +19,7 @@ interface DatosExport {
   stockBodega: StockBodegaRow[]
   resumenBar: ResumenBarRow[]
   resumen: ResumenProductoRow[]
+  productos: Producto[]
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -93,6 +95,8 @@ export async function generarExcel(datos: DatosExport) {
   wb.created = new Date()
 
   const fechaTexto = new Date().toLocaleString('es-CR')
+  const prodPorId = new Map(datos.productos.map((p) => [p.id, p]))
+  const prodPorNombre = new Map(datos.productos.map((p) => [p.nombre, p]))
 
   // ---- Portada ----
   const ingreso = datos.resumen.reduce((acc, r) => acc + r.ingreso_total, 0)
@@ -172,7 +176,8 @@ export async function generarExcel(datos: DatosExport) {
   wsProd.columns = [
     { header: 'Producto', key: 'producto', width: 28 },
     { header: 'Tipo', key: 'tipo', width: 14 },
-    { header: 'Vendido', key: 'vendido', width: 10 },
+    { header: 'Vendido (unidades)', key: 'vendido', width: 12 },
+    { header: 'Vendido (cajas/paq.)', key: 'vendido_eq', width: 20 },
     { header: 'Ingreso (₡)', key: 'ingreso', width: 14 },
     { header: 'Costo (₡)', key: 'costo', width: 14 },
     { header: 'Ganancia (₡)', key: 'ganancia', width: 14 },
@@ -182,6 +187,7 @@ export async function generarExcel(datos: DatosExport) {
       producto: r.nombre,
       tipo: r.tipo === 'alcoholica' ? 'Alcohólica' : 'Sin alcohol',
       vendido: r.total_vendido,
+      vendido_eq: formatoEmpaque(r.total_vendido, prodPorId.get(r.producto_id)),
       ingreso: r.ingreso_total,
       costo: r.costo_total,
       ganancia: r.ganancia_total,
@@ -190,27 +196,36 @@ export async function generarExcel(datos: DatosExport) {
   ;['ingreso', 'costo', 'ganancia'].forEach((k) => {
     wsProd.getColumn(k).numFmt = MONEY_FMT
   })
-  estilizarHoja(wsProd, 'Resumen por producto', 6)
+  estilizarHoja(wsProd, 'Resumen por producto', 7)
 
   // ---- Stock en bodega ----
   const wsStock = wb.addWorksheet('Stock en bodega')
   wsStock.columns = [
     { header: 'Producto', key: 'producto', width: 28 },
-    { header: 'Entradas', key: 'entradas', width: 12 },
-    { header: 'Trasladado', key: 'trasladado', width: 12 },
-    { header: 'Devuelto', key: 'devuelto', width: 12 },
-    { header: 'Stock actual', key: 'stock', width: 12 },
+    { header: 'Entradas (unid.)', key: 'entradas', width: 14 },
+    { header: 'Entradas (cajas/paq.)', key: 'entradas_eq', width: 20 },
+    { header: 'Trasladado (unid.)', key: 'trasladado', width: 14 },
+    { header: 'Trasladado (cajas/paq.)', key: 'trasladado_eq', width: 22 },
+    { header: 'Devuelto (unid.)', key: 'devuelto', width: 14 },
+    { header: 'Devuelto (cajas/paq.)', key: 'devuelto_eq', width: 20 },
+    { header: 'Stock actual (unid.)', key: 'stock', width: 16 },
+    { header: 'Stock actual (cajas/paq.)', key: 'stock_eq', width: 22 },
   ]
   datos.stockBodega.forEach((s) => {
+    const p = prodPorId.get(s.producto_id)
     wsStock.addRow({
       producto: s.nombre,
       entradas: s.total_entradas,
+      entradas_eq: formatoEmpaque(s.total_entradas, p),
       trasladado: s.total_trasladado,
+      trasladado_eq: formatoEmpaque(s.total_trasladado, p),
       devuelto: s.total_devuelto,
+      devuelto_eq: formatoEmpaque(s.total_devuelto, p),
       stock: s.stock_bodega,
+      stock_eq: formatoEmpaque(s.stock_bodega, p),
     })
   })
-  estilizarHoja(wsStock, 'Stock en bodega central', 5, { negativeCol: 'stock' })
+  estilizarHoja(wsStock, 'Stock en bodega central', 9, { negativeCol: 'stock' })
 
   // ---- Movimientos (historial completo, sin limite) ----
   const [{ data: entradas }, { data: traslados }, { data: devoluciones }, { data: incidencias }] =
@@ -278,7 +293,8 @@ export async function generarExcel(datos: DatosExport) {
     { header: 'Fecha', key: 'fecha', width: 20 },
     { header: 'Producto', key: 'producto', width: 28 },
     { header: 'Bar', key: 'bar', width: 22 },
-    { header: 'Cantidad', key: 'cantidad', width: 10 },
+    { header: 'Cantidad (unid.)', key: 'cantidad', width: 14 },
+    { header: 'Cantidad (cajas/paq.)', key: 'cantidad_eq', width: 20 },
     { header: 'Motivo', key: 'motivo', width: 14 },
     { header: 'Observaciones', key: 'obs', width: 32 },
   ]
@@ -289,11 +305,12 @@ export async function generarExcel(datos: DatosExport) {
       producto: r.producto,
       bar: r.bar,
       cantidad: r.cantidad,
+      cantidad_eq: formatoEmpaque(r.cantidad, prodPorNombre.get(r.producto)),
       motivo: r.motivo,
       obs: r.obs,
     })
   })
-  estilizarHoja(wsMov, 'Historial completo de movimientos', 7)
+  estilizarHoja(wsMov, 'Historial completo de movimientos', 8)
 
   const buffer = await wb.xlsx.writeBuffer()
   const blob = new Blob([buffer], {

@@ -1,5 +1,10 @@
 import type { Producto } from './types'
 
+export function unidadesYEmpaque(cantidad: number, producto?: Producto) {
+  if ((producto?.unidades_por_caja ?? 1) <= 1) return `${cantidad}`
+  return `${cantidad} (${formatoEmpaque(cantidad, producto)})`
+}
+
 export function formatoEmpaque(stock: number, producto?: Producto) {
   const porCaja = producto?.unidades_por_caja ?? 1
   if (porCaja <= 1) return `${stock} unidades`

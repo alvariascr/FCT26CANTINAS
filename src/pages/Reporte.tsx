@@ -4,7 +4,8 @@ import { supabase } from '../lib/supabaseClient'
 import { generarExcel } from '../lib/exportExcel'
 import StockBadge from '../components/StockBadge'
 import Collapsible from '../components/Collapsible'
-import type { ResumenBarRow, ResumenProductoRow, StockBodegaRow } from '../lib/types'
+import type { Producto, ResumenBarRow, ResumenProductoRow, StockBodegaRow } from '../lib/types'
+import { formatoEmpaque, unidadesYEmpaque } from '../lib/formatoEmpaque'
 
 const moneda = new Intl.NumberFormat('es-CR', { maximumFractionDigits: 0 })
 
@@ -13,19 +14,22 @@ export default function Reporte() {
   const [stockBodega, setStockBodega] = useState<StockBodegaRow[]>([])
   const [resumenBar, setResumenBar] = useState<ResumenBarRow[]>([])
   const [resumen, setResumen] = useState<ResumenProductoRow[]>([])
+  const [productos, setProductos] = useState<Producto[]>([])
   const [loading, setLoading] = useState(true)
   const [exportando, setExportando] = useState(false)
 
   useEffect(() => {
     async function cargar() {
-      const [{ data: bodega }, { data: bares }, { data: res }] = await Promise.all([
+      const [{ data: bodega }, { data: bares }, { data: res }, { data: prods }] = await Promise.all([
         supabase.from('v_stock_bodega').select('*').order('nombre'),
         supabase.from('v_resumen_bar').select('*'),
         supabase.from('v_resumen_producto').select('*').order('nombre'),
+        supabase.from('productos').select('*'),
       ])
       setStockBodega(bodega ?? [])
       setResumenBar(bares ?? [])
       setResumen(res ?? [])
+      setProductos(prods ?? [])
       setLoading(false)
     }
     cargar()
@@ -48,7 +52,7 @@ export default function Reporte() {
   async function handleExportarExcel() {
     setExportando(true)
     try {
-      await generarExcel({ stockBodega, resumenBar, resumen })
+      await generarExcel({ stockBodega, resumenBar, resumen, productos })
     } catch (e) {
       alert('No se pudo generar el Excel: ' + (e instanceof Error ? e.message : String(e)))
     } finally {
@@ -110,17 +114,23 @@ export default function Reporte() {
               </tr>
             </thead>
             <tbody>
-              {stockBodega.map((s) => (
-                <tr key={s.producto_id}>
-                  <td>{s.nombre}</td>
-                  <td>{s.total_entradas}</td>
-                  <td>{s.total_trasladado}</td>
-                  <td>{s.total_devuelto}</td>
-                  <td>
-                    <StockBadge value={s.stock_bodega} />
-                  </td>
-                </tr>
-              ))}
+              {stockBodega.map((s) => {
+                const p = productos.find((pr) => pr.id === s.producto_id)
+                return (
+                  <tr key={s.producto_id}>
+                    <td>{s.nombre}</td>
+                    <td>{unidadesYEmpaque(s.total_entradas, p)}</td>
+                    <td>{unidadesYEmpaque(s.total_trasladado, p)}</td>
+                    <td>{unidadesYEmpaque(s.total_devuelto, p)}</td>
+                    <td>
+                      <StockBadge value={s.stock_bodega} />
+                      {(p?.unidades_por_caja ?? 1) > 1 && (
+                        <span> ({formatoEmpaque(s.stock_bodega, p)})</span>
+                      )}
+                    </td>
+                  </tr>
+                )
+              })}
             </tbody>
           </table>
         </Collapsible>
@@ -198,7 +208,12 @@ export default function Reporte() {
               {resumen.map((r) => (
                 <tr key={r.producto_id}>
                   <td>{r.nombre}</td>
-                  <td>{r.total_vendido}</td>
+                  <td>
+                    {unidadesYEmpaque(
+                      r.total_vendido,
+                      productos.find((pr) => pr.id === r.producto_id)
+                    )}
+                  </td>
                   <td>₡{moneda.format(r.ingreso_total)}</td>
                   <td>₡{moneda.format(r.costo_total)}</td>
                   <td>₡{moneda.format(r.ganancia_total)}</td>
