@@ -1,1 +1,1 @@
-export const MAX_CANTIDAD = 100000
+export const MAX_CANTIDAD = 10000
