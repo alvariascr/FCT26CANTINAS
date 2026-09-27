@@ -5,7 +5,7 @@ import { useToast } from '../lib/ToastContext'
 import Modal from '../components/Modal'
 import StockBadge from '../components/StockBadge'
 import { formatoEmpaque } from '../lib/formatoEmpaque'
-import { MAX_CANTIDAD } from '../lib/limites'
+import { MAX_CANTIDAD, MAX_EMPAQUES } from '../lib/limites'
 import type {
   Bar,
   MotivoIncidencia,
@@ -242,7 +242,10 @@ export default function Movimientos() {
     (modo === 'traslado' && cantidadReal > stockBodegaDisponible) ||
     (modo === 'devolucion' && cantidadReal > stockBarActual)
 
-  const excedeMaximo = cantidadReal > MAX_CANTIDAD
+  const maxEntrada = empaqueForm === 'unidad' ? MAX_CANTIDAD : MAX_EMPAQUES
+  const nombreUnidadEntrada =
+    empaqueForm === 'caja' ? 'cajas' : empaqueForm === 'paquete' ? 'paquetes' : 'unidades'
+  const excedeMaximo = cantidad > maxEntrada || cantidadReal > MAX_CANTIDAD
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -368,7 +371,7 @@ export default function Movimientos() {
           )}
           {excedeMaximo && (
             <div style={{ marginTop: 6, fontSize: '0.85rem', color: 'var(--danger)' }}>
-              ⚠️ Cantidad demasiado grande (máximo {MAX_CANTIDAD} unidades).
+              ⚠️ Cantidad demasiado grande (máximo {maxEntrada} {nombreUnidadEntrada}).
             </div>
           )}
         </div>
@@ -425,7 +428,7 @@ export default function Movimientos() {
               value={cantidad === 0 ? '' : cantidad}
               onChange={(e) => {
                 const v = e.target.value
-                setCantidad(v === '' ? 0 : Math.min(MAX_CANTIDAD, Math.max(0, Math.trunc(Number(v)) || 0)))
+                setCantidad(v === '' ? 0 : Math.min(maxEntrada, Math.max(0, Math.trunc(Number(v)) || 0)))
               }}
               onBlur={() => setCantidad((c) => (c <= 0 ? 1 : c))}
             />
