@@ -10,7 +10,7 @@ import type {
   ResumenProductoRow,
   StockBodegaRow,
 } from '../lib/types'
-import { formatoEmpaque } from '../lib/formatoEmpaque'
+import { formatoEmpaque, resumenEmpaques } from '../lib/formatoEmpaque'
 
 const moneda = new Intl.NumberFormat('es-CR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 
@@ -164,7 +164,12 @@ export default function Resumen() {
                     }
                   >
                     <td>{b.bar_nombre}</td>
-                    <td>{b.total_vendido} u.</td>
+                    <td>
+                      {resumenEmpaques(
+                        movimientosBar.filter((m) => m.bar_id === b.bar_id),
+                        productos
+                      )}
+                    </td>
                     <td>₡{moneda.format(b.ingreso_total)}</td>
                     <td>₡{moneda.format(b.costo_total)}</td>
                     <td>₡{moneda.format(b.ganancia_total)}</td>
@@ -203,7 +208,12 @@ export default function Resumen() {
                     }
                   >
                     <td>{b.bar_nombre}</td>
-                    <td>{b.total_vendido} u.</td>
+                    <td>
+                      {resumenEmpaques(
+                        movimientosBar.filter((m) => m.bar_id === b.bar_id),
+                        productos
+                      )}
+                    </td>
                     <td>₡{moneda.format(b.valor_equivalente_total)}</td>
                     <td>₡{moneda.format(b.costo_total)}</td>
                     <td className="chevron-cell">›</td>
