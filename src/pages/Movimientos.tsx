@@ -80,22 +80,22 @@ export default function Movimientos() {
           .from('entradas_bodega')
           .select('id, producto_id, cantidad, creado_en, productos(nombre)')
           .order('creado_en', { ascending: false })
-          .limit(100),
+          .limit(2000),
         supabase
           .from('traslados')
           .select('id, producto_id, bar_id, cantidad, creado_en, productos(nombre), bares(nombre)')
           .order('creado_en', { ascending: false })
-          .limit(100),
+          .limit(2000),
         supabase
           .from('devoluciones')
           .select('id, producto_id, bar_id, cantidad, creado_en, productos(nombre), bares(nombre)')
           .order('creado_en', { ascending: false })
-          .limit(100),
+          .limit(2000),
         supabase
           .from('incidencias')
           .select('id, producto_id, bar_id, cantidad, motivo, creado_en, productos(nombre), bares(nombre)')
           .order('creado_en', { ascending: false })
-          .limit(100),
+          .limit(2000),
       ])
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -119,7 +119,7 @@ export default function Movimientos() {
       ...(incidencias ?? []).map(toItem('incidencias')),
     ].sort((a, b) => b.creado_en.localeCompare(a.creado_en))
 
-    setHistorial(combinado.slice(0, 100))
+    setHistorial(combinado.slice(0, 2000))
   }
 
   async function borrarItem(item: ItemHistorial) {
