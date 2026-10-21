@@ -1,5 +1,5 @@
 import { supabase } from './supabaseClient'
-import type { Producto, ResumenBarRow, ResumenProductoRow, StockBodegaRow } from './types'
+import type { Gasto, Producto, ResumenBarRow, ResumenProductoRow, StockBodegaRow } from './types'
 import { formatoEmpaque } from './formatoEmpaque'
 
 const MONEY_FMT = '#,##0'
@@ -20,6 +20,8 @@ interface DatosExport {
   resumenBar: ResumenBarRow[]
   resumen: ResumenProductoRow[]
   productos: Producto[]
+  soloBares?: string[]
+  gastos?: Gasto[]
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -101,7 +103,9 @@ export async function generarExcel(datos: DatosExport) {
   // ---- Portada ----
   const ingreso = datos.resumen.reduce((acc, r) => acc + r.ingreso_total, 0)
   const costo = datos.resumen.reduce((acc, r) => acc + r.costo_total, 0)
-  const ganancia = ingreso - costo
+  const gananciaBruta = ingreso - costo
+  const totalGastos = (datos.gastos ?? []).reduce((acc, g) => acc + Number(g.monto), 0)
+  const ganancia = gananciaBruta - totalGastos
   const margen = ingreso > 0 ? (ganancia / ingreso) * 100 : 0
 
   const wsPortada = wb.addWorksheet('Resumen del evento')
@@ -118,15 +122,19 @@ export async function generarExcel(datos: DatosExport) {
   wsPortada.getRow(1).height = 30
 
   wsPortada.mergeCells('A2:B2')
-  wsPortada.getCell('A2').value = `Generado el ${fechaTexto}`
+  wsPortada.getCell('A2').value = datos.soloBares
+    ? `Generado el ${fechaTexto}. Solo: ${datos.soloBares.join(', ')}`
+    : `Generado el ${fechaTexto}`
   wsPortada.getCell('A2').font = { italic: true, color: { argb: 'FF777777' } }
   wsPortada.addRow([])
 
   const kpis: [string, number | string][] = [
     ['Ingreso total (₡)', ingreso],
-    ['Costo total (₡)', costo],
+    ['Costo de bebidas (₡)', costo],
+    ['Ganancia bruta (₡)', gananciaBruta],
+    ['Gastos (₡)', totalGastos],
     ['Ganancia neta (₡)', ganancia],
-    ['Margen', `${margen.toFixed(1)}%`],
+    ['Margen neto', `${margen.toFixed(1)}%`],
   ]
   kpis.forEach(([label, value]) => {
     const row = wsPortada.addRow([label, value])
@@ -198,7 +206,8 @@ export async function generarExcel(datos: DatosExport) {
   })
   estilizarHoja(wsProd, 'Resumen por producto', 7)
 
-  // ---- Stock en bodega ----
+  // ---- Stock en bodega (solo en el reporte completo, no en el filtrado por actividad) ----
+  if (datos.stockBodega.length > 0) {
   const wsStock = wb.addWorksheet('Stock en bodega')
   wsStock.columns = [
     { header: 'Producto', key: 'producto', width: 28 },
@@ -206,8 +215,10 @@ export async function generarExcel(datos: DatosExport) {
     { header: 'Entradas (cajas/paq.)', key: 'entradas_eq', width: 20 },
     { header: 'Trasladado (unid.)', key: 'trasladado', width: 14 },
     { header: 'Trasladado (cajas/paq.)', key: 'trasladado_eq', width: 22 },
-    { header: 'Devuelto (unid.)', key: 'devuelto', width: 14 },
-    { header: 'Devuelto (cajas/paq.)', key: 'devuelto_eq', width: 20 },
+    { header: 'Devuelto de bares (unid.)', key: 'devuelto', width: 18 },
+    { header: 'Devuelto de bares (cajas/paq.)', key: 'devuelto_eq', width: 24 },
+    { header: 'Devuelto a proveedor (unid.)', key: 'dev_prov', width: 20 },
+    { header: 'Devuelto a proveedor (cajas/paq.)', key: 'dev_prov_eq', width: 26 },
     { header: 'Stock actual (unid.)', key: 'stock', width: 16 },
     { header: 'Stock actual (cajas/paq.)', key: 'stock_eq', width: 22 },
   ]
@@ -221,11 +232,41 @@ export async function generarExcel(datos: DatosExport) {
       trasladado_eq: formatoEmpaque(s.total_trasladado, p),
       devuelto: s.total_devuelto,
       devuelto_eq: formatoEmpaque(s.total_devuelto, p),
+      dev_prov: s.total_devuelto_proveedor,
+      dev_prov_eq: formatoEmpaque(s.total_devuelto_proveedor, p),
       stock: s.stock_bodega,
       stock_eq: formatoEmpaque(s.stock_bodega, p),
     })
   })
-  estilizarHoja(wsStock, 'Stock en bodega central', 9, { negativeCol: 'stock' })
+  estilizarHoja(wsStock, 'Stock en bodega central', 11, { negativeCol: 'stock' })
+  }
+
+  // ---- Gastos (solo en el reporte completo) ----
+  const gastos = datos.gastos ?? []
+  if (gastos.length > 0) {
+    const wsGastos = wb.addWorksheet('Gastos')
+    wsGastos.columns = [
+      { header: 'Fecha', key: 'fecha', width: 14 },
+      { header: 'Concepto', key: 'concepto', width: 34 },
+      { header: 'Cantidad', key: 'cantidad', width: 10 },
+      { header: 'Proveedor', key: 'proveedor', width: 16 },
+      { header: 'Proforma', key: 'referencia', width: 12 },
+      { header: 'Monto (₡)', key: 'monto', width: 16 },
+    ]
+    gastos.forEach((g) => {
+      wsGastos.addRow({
+        fecha: new Date(g.creado_en).toLocaleDateString('es-CR'),
+        concepto: g.concepto,
+        cantidad: g.cantidad ?? '',
+        proveedor: g.proveedor ?? '',
+        referencia: g.referencia ?? '',
+        monto: Number(g.monto),
+      })
+    })
+    wsGastos.addRow({ concepto: 'Total', monto: totalGastos }).font = { bold: true }
+    wsGastos.getColumn('monto').numFmt = MONEY_FMT
+    estilizarHoja(wsGastos, 'Gastos que no son bebida', 6)
+  }
 
   // ---- Movimientos (historial completo, sin limite) ----
   const [{ data: entradas }, { data: traslados }, { data: devoluciones }, { data: incidencias }] =
@@ -288,7 +329,9 @@ export async function generarExcel(datos: DatosExport) {
       obs: r.observaciones ?? '',
       creado_en: r.creado_en,
     })),
-  ].sort((a, b) => String(a.creado_en).localeCompare(String(b.creado_en)))
+  ]
+    .filter((r: Fila) => !datos.soloBares || datos.soloBares.includes(r.bar))
+    .sort((a, b) => String(a.creado_en).localeCompare(String(b.creado_en)))
 
   const wsMov = wb.addWorksheet('Movimientos')
   wsMov.columns = [

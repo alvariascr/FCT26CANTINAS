@@ -20,6 +20,7 @@ export default function Resumen() {
   const [movimientosBar, setMovimientosBar] = useState<MovimientoBarRow[]>([])
   const [resumen, setResumen] = useState<ResumenProductoRow[]>([])
   const [productos, setProductos] = useState<Producto[]>([])
+  const [totalGastos, setTotalGastos] = useState(0)
   const [loading, setLoading] = useState(true)
   const [barDetalle, setBarDetalle] = useState<{
     id: string
@@ -29,14 +30,22 @@ export default function Resumen() {
 
   async function cargar() {
     setLoading(true)
-    const [{ data: bodega }, { data: bares }, { data: movs }, { data: res }, { data: prods }] =
-      await Promise.all([
-        supabase.from('v_stock_bodega').select('*').order('nombre'),
-        supabase.from('v_resumen_bar').select('*'),
-        supabase.from('v_movimientos_bar').select('*').order('producto_nombre'),
-        supabase.from('v_resumen_producto').select('*').order('nombre'),
-        supabase.from('productos').select('*'),
-      ])
+    const [
+      { data: bodega },
+      { data: bares },
+      { data: movs },
+      { data: res },
+      { data: prods },
+      { data: gastos },
+    ] = await Promise.all([
+      supabase.from('v_stock_bodega').select('*').order('nombre'),
+      supabase.from('v_resumen_bar').select('*'),
+      supabase.from('v_movimientos_bar').select('*').order('producto_nombre'),
+      supabase.from('v_resumen_producto').select('*').order('nombre'),
+      supabase.from('productos').select('*'),
+      supabase.from('gastos').select('monto'),
+    ])
+    setTotalGastos((gastos ?? []).reduce((acc, g) => acc + Number(g.monto), 0))
     setStockBodega(bodega ?? [])
     setResumenBar(bares ?? [])
     setMovimientosBar(movs ?? [])
@@ -58,10 +67,11 @@ export default function Resumen() {
   const totales = useMemo(() => {
     const ingreso = resumen.reduce((acc, r) => acc + r.ingreso_total, 0)
     const costo = resumen.reduce((acc, r) => acc + r.costo_total, 0)
-    const ganancia = ingreso - costo
+    const gananciaBruta = ingreso - costo
+    const ganancia = gananciaBruta - totalGastos
     const margen = ingreso > 0 ? (ganancia / ingreso) * 100 : 0
-    return { ingreso, costo, ganancia, margen }
-  }, [resumen])
+    return { ingreso, costo, gananciaBruta, ganancia, margen }
+  }, [resumen, totalGastos])
 
   const valorRegaladoTotal = useMemo(
     () => baresCortesia.reduce((acc, b) => acc + b.valor_equivalente_total, 0),
@@ -85,8 +95,16 @@ export default function Resumen() {
           <div className="value">₡{moneda.format(totales.ingreso)}</div>
         </div>
         <div className="summary-tile">
-          <div className="label">Costo total</div>
+          <div className="label">Costo de bebidas</div>
           <div className="value">₡{moneda.format(totales.costo)}</div>
+        </div>
+        <div className="summary-tile">
+          <div className="label">Ganancia bruta</div>
+          <div className="value">₡{moneda.format(totales.gananciaBruta)}</div>
+        </div>
+        <div className="summary-tile">
+          <div className="label">Gastos</div>
+          <div className="value">₡{moneda.format(totalGastos)}</div>
         </div>
         <div className="summary-tile">
           <div className="label">Ganancia neta</div>
@@ -95,14 +113,18 @@ export default function Resumen() {
           </div>
         </div>
         <div className="summary-tile">
-          <div className="label">Margen promedio</div>
+          <div className="label">Margen neto</div>
           <div className="value">{totales.margen.toFixed(1)}%</div>
         </div>
       </div>
       <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: -10, marginBottom: 18 }}>
         El costo incluye todo lo consumido (venta y cortesías); el ingreso solo cuenta lo vendido de
-        verdad, sin las cortesías.
+        verdad, sin las cortesías. La ganancia neta ya descuenta los gastos.
       </div>
+
+      <Link to="/gastos" className="btn-secondary" style={{ display: 'block', textAlign: 'center', marginBottom: 10 }}>
+        🧾 Ver y agregar gastos
+      </Link>
 
       <Link to="/reporte" className="btn-secondary" style={{ display: 'block', textAlign: 'center', marginBottom: 18 }}>
         🖨️ Ver reporte de cierre (PDF / Excel)

@@ -686,7 +686,7 @@ th {
 
 .reporte-summary {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 10px;
   margin-bottom: 10px;
 }
@@ -775,4 +775,23 @@ th {
   tr {
     break-inside: avoid;
   }
+}
+
+.reporte-filtro {
+  margin: 0 20px 16px;
+  padding: 14px 16px;
+  border: 1px solid #e6e1d6;
+  border-radius: 12px;
+  background: #faf7f2;
+  display: grid;
+  gap: 10px;
+  color: #15131a;
+}
+
+.reporte-filtro label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 16px 6px 0;
+  font-size: 0.9rem;
 }

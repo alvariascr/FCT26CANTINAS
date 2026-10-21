@@ -60,6 +60,17 @@ export interface EntradaBodega {
   creado_en: string
 }
 
+export interface Gasto {
+  id: string
+  concepto: string
+  proveedor: string | null
+  referencia: string | null
+  cantidad: number | null
+  monto: number
+  usuario_id: string | null
+  creado_en: string
+}
+
 export interface StockBodegaRow {
   producto_id: string
   nombre: string
@@ -68,6 +79,7 @@ export interface StockBodegaRow {
   total_trasladado: number
   total_devuelto: number
   stock_bodega: number
+  total_devuelto_proveedor: number
 }
 
 export interface StockBarRow {

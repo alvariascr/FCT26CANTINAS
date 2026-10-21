@@ -9,6 +9,7 @@ import Movimientos from './pages/Movimientos'
 import Resumen from './pages/Resumen'
 import Catalogo from './pages/Catalogo'
 import Reporte from './pages/Reporte'
+import Gastos from './pages/Gastos'
 
 export default function App() {
   return (
@@ -36,6 +37,7 @@ export default function App() {
               <Route path="/incidencia" element={<Incidencia />} />
               <Route path="/resumen" element={<Resumen />} />
               <Route path="/catalogo" element={<Catalogo />} />
+              <Route path="/gastos" element={<Gastos />} />
             </Route>
           </Routes>
         </ToastProvider>
